@@ -1,0 +1,11 @@
+#MAC
+.DS_Store
+
+#IDE
+.idea
+*.iml
+target/
+
+#TEMP FILE
+*.log
+*.test
