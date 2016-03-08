@@ -83,4 +83,8 @@ ForkJoinPool-1-worker-13: read success - [B@1129e10
 ForkJoinPool-1-worker-13: read success - [B@1129e10
 ForkJoinPool-1-worker-13: get info - 北京,你好!, uuid: 1, length: 14
 
-```
+```  
+
+####UPDATE  
+1. catch disconnected exception
+2. add loop send msg simulate

@@ -25,16 +25,20 @@ object DemoServerMain extends App {
     override def onCompleted() = log(s"No more read.")
   }
 
-//  val onRead = read.subscribe(readObs)
+  val onRead = read.subscribe(readSub)
 
+  val readWithSSocketSub = read
   /**
     * read with this socket obs
     */
-  val socketWithRead = socket.flatMap{s =>  s.startReading.map{r => (s, r)}}
-  socketWithRead.subscribe{ sAndR =>
-    log(s"connected address - ${sAndR._1.socketChannel.getRemoteAddress}. " +
-      s"read info - ${sAndR._2.map{proto => new String(proto.loaded.array())}}")
-  }
+//  val socketWithRead = socket.flatMap{s =>  s.startReading.map{r => (s, r)}}
+//  socketWithRead.subscribe{ sAndR =>
+//    log(s"connected address - ${sAndR._1.socketChannel.getRemoteAddress}. " +
+//      s"read info - ${sAndR._2.map{proto => new String(proto.loaded.array())}}")
+//  }
+
+    //TODO how to create read with socket combined stream, meanwhile, we can create a stream with read only
+
 
   val sub = new Observer[ConnectedSocket] {
     override def onNext(c: ConnectedSocket) = {
