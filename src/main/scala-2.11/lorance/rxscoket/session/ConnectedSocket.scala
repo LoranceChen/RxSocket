@@ -25,8 +25,14 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel) {
     Observable.apply[Vector[CompletedProto]]({ s =>
       def readForever(): Unit = read(readAttach) onComplete {
         case Failure(f) =>
-          log(s"read exception - $f")
-          s.onError(f)
+          f match {
+            case e: ReadResultNegativeException =>
+              log(s"$getClass - read completed")
+              s.onCompleted()
+            case _ =>
+              log(s"unhandle exception - $f")
+              s.onError(f)
+          }
         case Success(c) =>
           val src = c.byteBuffer
           log(s"read success - ${src.array()}")
