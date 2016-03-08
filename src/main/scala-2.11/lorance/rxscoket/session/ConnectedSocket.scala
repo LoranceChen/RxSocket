@@ -11,7 +11,7 @@ import scala.concurrent.{Future, Promise}
 import scala.util.{Success, Failure}
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class ConnectedSocket(socketChannel: AsynchronousSocketChannel) {
+class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
   def disconnect(): Unit = {
     socketChannel.close()
   }
