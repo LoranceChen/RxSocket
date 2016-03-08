@@ -17,15 +17,7 @@ object DemoServerMain extends App {
         context
       }
     }
-
-    override def onError(e: Throwable): Unit = {
-      e match {
-        case n: ReadResultNegativeException =>
-          log(s"read exception on subscribe - $n!")
-        case _ => log(s"unhandle exception")
-      }
-    }
-
+    
     override def onCompleted() = log(s"No more read.")
   }
 
