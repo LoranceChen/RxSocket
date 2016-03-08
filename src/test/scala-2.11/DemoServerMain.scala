@@ -17,7 +17,7 @@ object DemoServerMain extends App {
         context
       }
     }
-    
+
     override def onCompleted() = log(s"No more read.")
   }
 

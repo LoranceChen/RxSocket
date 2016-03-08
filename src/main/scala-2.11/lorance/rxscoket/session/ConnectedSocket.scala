@@ -27,7 +27,7 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel) {
         case Failure(f) =>
           f match {
             case e: ReadResultNegativeException =>
-              log(s"$getClass - read completed")
+              log(s"$getClass - read finished")
               s.onCompleted()
             case _ =>
               log(s"unhandle exception - $f")
