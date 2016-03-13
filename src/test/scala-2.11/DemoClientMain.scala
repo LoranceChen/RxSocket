@@ -7,7 +7,7 @@ import scala.concurrent.Future
 import scala.io.StdIn
 
 object DemoClientMain extends App {
-  val client = new ClientEntrance("localhost", 10001)
+  val client = new ClientEntrance("localhost", 10000)
   val socket = client.connect
 
   def enCoding(msg: String) = {
@@ -16,10 +16,14 @@ object DemoClientMain extends App {
     bytes ++ msgBytes
   }
 
+  val longMsg = """{"taskId": "threadname-timestamp" , "dataBase": "helloworld", "collection": "test", "method": "find", "params":{"match":{"name": "insertTest02"}}}"""
+
   val send = socket.flatMap{s =>
     val firstMsg = enCoding("hello server!")
     val secondMsg = enCoding("北京,你好!")
-    val data = ByteBuffer.wrap(firstMsg ++ secondMsg)
+    val longMS = enCoding(longMsg)
+
+    val data = ByteBuffer.wrap(firstMsg ++ secondMsg ++ longMS)
     s.send(data)
   }
 

@@ -5,7 +5,7 @@ import rx.lang.scala.Observer
 import scala.collection.mutable
 
 object DemoServerMain extends App {
-  val server = new ServerEntrance("localhost", 10001)
+  val server = new ServerEntrance("localhost", 10000)
   val socket = server.listen
 
   /**

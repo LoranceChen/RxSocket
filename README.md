@@ -87,4 +87,7 @@ ForkJoinPool-1-worker-13: get info - 北京,你好!, uuid: 1, length: 14
 ####UPDATE  
 1. catch disconnected exception
 2. add loop send msg simulate
+3. fix Negative Exception when msg length over 7 byte.
 
+####TODO
+1. send method should solve msg one by one. if not, it will cause msg cross written under multi-thread.

@@ -12,15 +12,14 @@ import scala.util.{Success, Failure}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
+  private val readerDispatch = new ReaderDispatch()
+
   def disconnect(): Unit = {
     socketChannel.close()
   }
 
-  val readerDispatch = new ReaderDispatch()
-
   def startReading: Observable[Vector[CompletedProto]] = {
     val readAttach = Attachment(ByteBuffer.allocate(10), socketChannel)
-
 
     Observable.apply[Vector[CompletedProto]]({ s =>
       def readForever(): Unit = read(readAttach) onComplete {

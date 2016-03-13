@@ -38,11 +38,12 @@ class ReaderDispatch(private var tmpProto: PaddingProto) {//extends Subject[]{
       case PaddingProto(None, _, _) =>
         val uuidOpt = tryGetByte(src)
         val lengthOpt = uuidOpt.flatMap{uuid => tryGetByte(src)}
-        val protoOpt = lengthOpt.flatMap { length =>
+        val protoOpt = lengthOpt.flatMap { lengthSigned =>
+          val length = lengthSigned & 0xFF
           if (length > maxLength) throw new TmpBufferOverLoadException()
           if(src.remaining() < length) {
             val newBf = ByteBuffer.allocate(length)
-            tmpProto = PaddingProto(uuidOpt, lengthOpt, newBf.put(src))
+            tmpProto = PaddingProto(uuidOpt, Some(length), newBf.put(src))
             None
           } else {
             tmpProto = PaddingProto(None,None, session.EmptyByteBuffer)
@@ -59,7 +60,8 @@ class ReaderDispatch(private var tmpProto: PaddingProto) {//extends Subject[]{
             else receiveHelper(src, completes.map(_ :+ completed))
         }
       case PaddingProto(Some(uuid), None, tmpBf) =>
-        val lengthOpt = tryGetByte(src)
+        val lengthSignedOpt = tryGetByte(src)
+        val lengthOpt = lengthSignedOpt.map(_ & 0xFF)
         val protoOpt = lengthOpt.flatMap { length =>
           if (length > maxLength) throw new TmpBufferOverLoadException()
           if (src.remaining() < length) {
@@ -102,6 +104,9 @@ class ReaderDispatch(private var tmpProto: PaddingProto) {//extends Subject[]{
   }
 }
 
+/**
+  * form now on, socket communicate length/lengthOpt by byte
+  */
 abstract class BufferedProto
-case class PaddingProto(uuidOpt: Option[Byte],lengthOpt: Option[Byte],loading: ByteBuffer)
-case class CompletedProto(uuid: Byte,length: Byte, loaded: ByteBuffer) extends BufferedProto
+case class PaddingProto(uuidOpt: Option[Byte],lengthOpt: Option[Int],loading: ByteBuffer)
+case class CompletedProto(uuid: Byte,length: Int, loaded: ByteBuffer) extends BufferedProto
