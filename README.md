@@ -1,4 +1,4 @@
-# RxSocket - v0.1
+# RxSocket - v0.5
 socket with reactive style.
 
 ## Example
@@ -88,6 +88,9 @@ ForkJoinPool-1-worker-13: get info - 北京,你好!, uuid: 1, length: 14
 1. catch disconnected exception
 2. add loop send msg simulate
 3. fix Negative Exception when msg length over 7 byte.
+4. fix socket send message loss bug under multi-thread.
+5  open limit length of Byte.  
 
 ####TODO
-1. send method should solve msg one by one. if not, it will cause msg cross written under multi-thread.
+1. send message with locked queue rather then synchronized notation,(better performance),  
+it's also Producer & Customer pattern in concurrent and able to implement with Rx Subject.(straight feeling)

@@ -34,7 +34,7 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
           }
         case Success(c) =>
           val src = c.byteBuffer
-          log(s"read success - ${src.array()}")
+          log(s"read success - ${src.array().length} bytes")
           readerDispatch.receive(src).foreach(s.onNext)
           readForever()
       }
@@ -44,19 +44,32 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
     }
   }
 
+  /**
+    * it seems NOT support concurrent write, but not break as read.
+    * after many times test, later write request will be ignored when
+    * under construct some write operation.
+    *
+    * TODO: Make a Queue to save write message, it's better then synchronized
+    * those method (input Queue is less cost)
+    *
+    * @param data
+    * @return
+    */
   def send(data: ByteBuffer) = {
     val p = Promise[Unit]
-    socketChannel.write(data, 1, new CompletionHandler[Integer, Int]{
-      override def completed(result: Integer, attachment: Int): Unit = {
-        log(s"send result - $result")
-        p.trySuccess(Unit)
-      }
+    this.synchronized {
+      socketChannel.write(data, 1, new CompletionHandler[Integer, Int] {
+        override def completed(result: Integer, attachment: Int): Unit = {
+          log(s"send completed result - $result")
+          p.trySuccess(Unit)
+        }
 
-      override def failed(exc: Throwable, attachment: Int): Unit = {
-        log(s"CompletionHandler - failed")
-        p.tryFailure(exc)
-      }
-    })
+        override def failed(exc: Throwable, attachment: Int): Unit = {
+          log(s"CompletionHandler - failed")
+          p.tryFailure(exc)
+        }
+      })
+    }
     p.future
   }
 
