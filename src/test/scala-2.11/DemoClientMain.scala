@@ -6,8 +6,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.io.StdIn
 
 object DemoClientMainTest extends App with DemoClientMain {
-  init
-  sendLoop
+//  init
+  Thread.currentThread().join()
 }
 
 trait DemoClientMain {
@@ -25,21 +25,27 @@ trait DemoClientMain {
     }
   }
 
-  def init = {
-    client
-    socket
-    reading
+  //encounter error TODO why?
+  socket.flatMap{s =>
+    val firstMsg = enCoding("hello server!")
+    val secondMsg = enCoding("北京,你好!")
+
+    log(s"send one - length - ${firstMsg.length}")
+    val data = ByteBuffer.wrap(firstMsg ++ secondMsg)
+    s.send(data)
   }
+
   /**
     * simulate user
     */
-  def sendLoop = {
+  def inputLoop = {
     while (true) {
+      log(s"input message:")
       val line = StdIn.readLine()
       val data = ByteBuffer.wrap(enCoding(line))
       socket.flatMap { s => {
-          s.send(data)
-        }
+        s.send(data)
+      }
       }
     }
   }

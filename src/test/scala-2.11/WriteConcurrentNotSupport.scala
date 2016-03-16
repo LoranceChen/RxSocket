@@ -11,7 +11,7 @@ import lorance.rxscoket._
   */
 object WriteConcurrentNotSupport extends DemoClientMain{
   def main(arg: Array[String]): Unit = {
-    init
+    println("enter")
     val longMsg = """{"taskId": "threadname-timestamp" , "dataBase": "helloworld", "collection": "test", "method": "find", "params":{"match":{"name": "insertTest02"}}}"""
 
     //these code proof send is safe on one thread.

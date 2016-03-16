@@ -37,9 +37,7 @@ object DemoServerMain extends App {
 //      s"read info - ${sAndR._2.map{proto => new String(proto.loaded.array())}}")
 //  }
 
-    //TODO how to create read with socket combined stream, meanwhile, we can create a stream with read only
-
-
+  //TODO how to create read with socket combined stream, meanwhile, we can create a stream with read only
   val sub = new Observer[ConnectedSocket] {
     override def onNext(c: ConnectedSocket) = {
 

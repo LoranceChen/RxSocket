@@ -31,14 +31,15 @@ class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Int.Ma
     */
   @tailrec private def receiveHelper(src: ByteBuffer, completes: Option[Vector[CompletedProto]]): Option[Vector[CompletedProto]] = {
     def tryGetByte(bf: ByteBuffer) = if(bf.remaining() >= 1) Some(bf.get()) else None
+
     def tryGetLength(bf: ByteBuffer, lengthOpt: Option[PendingLength]): Option[BufferedLength] = {
       val remaining = bf.remaining()
       lengthOpt match {
         case None =>
           if (remaining < 1) None
-          else if (1 <= remaining && remaining <= 4) {
-            val lengthByte = new Array[Byte](remaining)
-            bf.get(lengthByte)
+          else if (1 <= remaining && remaining < 4) {
+            val lengthByte = new Array[Byte](4)
+            bf.get(lengthByte, 0, remaining)
             Some(PendingLength(lengthByte, remaining))
           }
           else Some(CompletedLength(bf.getInt()))
@@ -61,7 +62,10 @@ class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Int.Ma
       * @return
       */
     def readLoad(src: ByteBuffer, paddingProto: PaddingProto) = {
-      val length = paddingProto.lengthOpt.get.value
+      require(paddingProto.lengthOpt.isDefined)
+      require(paddingProto.lengthOpt.get.isInstanceOf[CompletedLength])
+
+      val length = paddingProto.lengthOpt.get.value//todo refactor
       if (length > maxLength) throw new TmpBufferOverLoadException()
       if (src.remaining() < length) {
         val newBf = ByteBuffer.allocate(length)
@@ -121,8 +125,9 @@ class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Int.Ma
       case padding @ PaddingProto(Some(uuid), Some(pending @ PendingLength(arrived, number)), _) =>
         val lengthOpt = tryGetLength(src, Some(pending))
         val protoOpt = lengthOpt match {
-          case Some(CompletedLength(_)) =>
-            readLoad(src, padding)
+          case Some(length @ CompletedLength(_)) =>
+            val lengthedProto = PaddingProto(Some(uuid), lengthOpt, session.EmptyByteBuffer)
+            readLoad(src, lengthedProto)
           case Some(PendingLength(arrived, number)) =>
             tmpProto = PaddingProto(Some(uuid), lengthOpt, session.EmptyByteBuffer)
             None
@@ -167,5 +172,5 @@ case class CompletedProto(uuid: Byte,length: Int, loaded: ByteBuffer) extends Bu
   * length of the proto is represent by Int. It maybe under pending after once read form socket
   */
 abstract class BufferedLength{def value: Int}
-case class PendingLength(arrived: Array[Byte], var arrivedNumber: Int) extends BufferedLength{def value = -1}
+case class PendingLength(arrived: Array[Byte], var arrivedNumber: Int) extends BufferedLength{def value = throw new Exception("length not completed")}
 case class CompletedLength(length: Int) extends BufferedLength{def value = length}
