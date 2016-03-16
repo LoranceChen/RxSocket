@@ -6,7 +6,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.io.StdIn
 
 object DemoClientMainTest extends App with DemoClientMain {
-//  init
+  inputLoop
   Thread.currentThread().join()
 }
 

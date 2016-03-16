@@ -1,46 +1,10 @@
-# RxSocket - v0.5
+# RxSocket - v0.5f
 socket with reactive style.
 
 ## Example
 
 ### Client
-```
-import java.nio.ByteBuffer
-
-import lorance.rxscoket.session.ClientEntrance
-import lorance.rxscoket._
-import scala.concurrent.ExecutionContext.Implicits.global
-
-object DemoClientMain extends App {
-  val client = new ClientEntrance("localhost", 10001)
-  val socket = client.connect
-
-  val send = socket.flatMap{s =>
-    def enCoding(msg: String) = {
-      val msgBytes = msg.getBytes
-      val bytes = Array[Byte](1,msgBytes.length.toByte)
-      bytes ++ msgBytes
-    }
-    val firstMsg = enCoding("hello server!")
-    val secondMsg = enCoding("北京,你好!")
-    val data = ByteBuffer.wrap(firstMsg ++ secondMsg)
-    s.send(data)
-  }
-
-  val reading = socket.map(_.startReading)
-  reading.map{r =>
-    r.subscribe{protos =>
-      protos.map{ proto =>
-        val context = new String(proto.loaded.array())
-        log(s"get info - $context, uuid: ${proto.uuid}, length: ${proto.length}")
-        context
-      }
-    }
-  }
-
-  Thread.currentThread().join()
-}
-```
+See `DemoClientMainTest.scala` in test directory
 
 #### Output
 ```
@@ -49,26 +13,7 @@ Thread-9: send completed result - 37
 ```
 
 ### Server
-```
-import lorance.rxscoket._
-import lorance.rxscoket.session.ServerEntrance
-
-object DemoServerMain extends App {
-  val server = new ServerEntrance("localhost", 10001)
-  val socket = server.listen
-  val read = socket.flatMap(_.startReading)
-
-  read.subscribe{ protos =>
-    protos.map{ proto =>
-      val context = new String(proto.loaded.array())
-      log(s"get info - $context, uuid: ${proto.uuid}, length: ${proto.length}")
-      context
-    }
-  }
-
-  Thread.currentThread().join()
-}
-```
+See `DemoServerMain.scala` in test directory
 
 ####Output
 ```
@@ -88,4 +33,4 @@ ForkJoinPool-1-worker-13: get info - 北京,你好!, uuid: 1, length: 14
 2. add loop send msg simulate
 3. fix Negative Exception when msg length capacity over 7 byte.
 4. fix socket send message loss bug under multi-thread.
-5  open limit length of Byte.  
+5  open limit length of load.  
