@@ -33,4 +33,4 @@ ForkJoinPool-1-worker-13: get info - 北京,你好!, uuid: 1, length: 14
 2. add loop send msg simulate
 3. fix Negative Exception when msg length capacity over 7 byte.
 4. fix socket send message loss bug under multi-thread.
-5  open limit length of load.  
+5. open limit length of load.  
