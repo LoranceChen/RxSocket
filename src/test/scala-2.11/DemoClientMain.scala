@@ -25,12 +25,10 @@ trait DemoClientMain {
     }
   }
 
-  //encounter error TODO why?
   socket.flatMap{s =>
     val firstMsg = enCoding("hello server!")
     val secondMsg = enCoding("北京,你好!")
 
-    log(s"send one - length - ${firstMsg.length}")
     val data = ByteBuffer.wrap(firstMsg ++ secondMsg)
     s.send(data)
   }

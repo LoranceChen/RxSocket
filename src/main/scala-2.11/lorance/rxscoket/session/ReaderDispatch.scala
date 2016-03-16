@@ -131,7 +131,7 @@ class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Int.Ma
           case Some(PendingLength(arrived, number)) =>
             tmpProto = PaddingProto(Some(uuid), lengthOpt, session.EmptyByteBuffer)
             None
-          case _ => ???
+          case _ => ??? // NEVER arrived
         }
         protoOpt match {
           case None => completes
