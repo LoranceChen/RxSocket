@@ -1,4 +1,4 @@
-# RxSocket - v0.5f
+# RxSocket - v0.7
 socket with reactive style.
 
 ## Example
@@ -38,3 +38,10 @@ ForkJoinPool-1-worker-13: second subscriber get protocol - 北京,你好!
 2016.03.25
 1. change connect and read operation to a real observable stream
 2. test use case fix cold observable caused `ReadPendingException` by multi reading same socket.
+
+####Roadmap
+* completely multi-thread support
+* json format communicate easy and scalable
+* adds try-catch for breakable event
+* adds useful observable on special event
+* handle reconnect and relate notification.
