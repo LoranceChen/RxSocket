@@ -1,11 +1,12 @@
 name := "RxSocket"
 
-version := "0.5-SNAPSHOT"
+version := "0.6-SNAPSHOT"
 
 scalaVersion := "2.11.7"
 
 libraryDependencies ++= Seq(
-  "com.netflix.rxjava" % "rxjava-scala" % "0.20.7"
+  "com.netflix.rxjava" % "rxjava-scala" % "0.20.7",
+  "net.liftweb" %% "lift-json" % "3.0-M8"
 )
 
 exportJars := true
