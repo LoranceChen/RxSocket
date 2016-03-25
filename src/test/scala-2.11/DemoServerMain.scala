@@ -1,48 +1,36 @@
-import lorance.rxscoket._
-import lorance.rxscoket.session.exception.ReadResultNegativeException
-import lorance.rxscoket.session.{CompletedProto, ConnectedSocket, ServerEntrance}
-import rx.lang.scala.Observer
-import scala.collection.mutable
 
+import lorance.rxscoket._
+import lorance.rxscoket.session.{ConnectedSocket, ServerEntrance}
+import rx.lang.scala.Observable
+
+/**
+  * TODO difference between Observer and Subscription? both of them has OnNext, OnError, OnComplete.which stage in Rx is them place
+  */
 object DemoServerMain extends App {
   val server = new ServerEntrance("localhost", 10002)
-  val socket = server.listen
+  val socket: Observable[ConnectedSocket] = server.listen
+
+  socket.subscribe(s => log(s"Hi, Mike, someone connected - "))
+  socket.subscribe(s => log(s"Hi, John, someone connected - "))
 
   /**
     * read obs
+    * NOTE: use `.publish` ensure the production of Observable is hot - a hot observable make a independence of a map chain,
+    * it also important to avoid multi execute `startReading`.
+    * Why use hot: It's really sad, the `map` make subscribe exec map body every times.so `stratReading` caused failure of
     */
-  val read = socket.flatMap(_.startReading)
+  val read = socket.flatMap(l => l.startReading).publish
+  read.connect
 
-  val readSub = new Observer[Vector[CompletedProto]] {
-    override def onNext(protos: Vector[CompletedProto]) = {
-      protos.map{ proto =>
-        val context = new String(proto.loaded.array())
-        log(s"get info - $context, uuid: ${proto.uuid}, length: ${proto.length}")
-        context
-      }
-    }
-
-    override def onCompleted() = log(s"No more read.")
-  }
-
-  val onRead = read.subscribe(readSub)
-
-  val readWithSSocketSub = read
-  /**
-    * read with this socket obs
-    */
-//  val socketWithRead = socket.flatMap{s =>  s.startReading.map{r => (s, r)}}
-//  socketWithRead.subscribe{ sAndR =>
-//    log(s"connected address - ${sAndR._1.socketChannel.getRemoteAddress}. " +
-//      s"read info - ${sAndR._2.map{proto => new String(proto.loaded.array())}}")
+  //this way also make a subscribe event to hot Observable by explicit create new one. It seems odd but practical.
+//  var read2: Observable[Vector[CompletedProto]] = {
+//    val p = Promise[Observable[Vector[CompletedProto]]]
+//    socket.subscribe{l => log("read start reading");p.trySuccess(l.startReading)}
+//    Observable.from(p.future).flatten
 //  }
 
-  //TODO how to create read with socket combined stream, meanwhile, we can create a stream with read only
-  val sub = new Observer[ConnectedSocket] {
-    override def onNext(c: ConnectedSocket) = {
-
-    }
-  }
+  read.subscribe{r => r.foreach{x => log(s"first subscriber get protocol - ${new String(x.loaded.array())}")}}
+  read.subscribe{r => r.foreach{x => log(s"second subscriber get protocol - ${new String(x.loaded.array())}")}}
 
   Thread.currentThread().join()
 }
