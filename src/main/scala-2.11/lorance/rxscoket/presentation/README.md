@@ -8,7 +8,7 @@ simulate count operation with mongo CRUD json server and it's client
 1. define structure Query json
 ```
 {
-  "taskId": "thread-1:timestamp",//if not have represent needn't call back
+  "taskId": "thread-1:timestamp",//if not contains, means needn't call back
   "dataBase": "helloworld",
   "collection": "accounts",
   "method": "count",

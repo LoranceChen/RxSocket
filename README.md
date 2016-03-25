@@ -20,12 +20,12 @@ See `DemoServerMain.scala` in test directory
 main: Server is listening at - localhost/127.0.0.1:10002
 Thread-9: connect - success
 ForkJoinPool-1-worker-13: client connected
-ForkJoinPool-1-worker-13: read success - 10 bytes
-ForkJoinPool-1-worker-13: read success - 10 bytes
-ForkJoinPool-1-worker-13: get info - hello server!, uuid: 1, length: 13
-ForkJoinPool-1-worker-13: read success - 10 bytes
-ForkJoinPool-1-worker-13: read success - 10 bytes
-ForkJoinPool-1-worker-13: get info - 北京,你好!, uuid: 1, length: 14
+ForkJoinPool-1-worker-13: Hi, Mike, someone connected - 
+ForkJoinPool-1-worker-13: Hi, John, someone connected - 
+ForkJoinPool-1-worker-13: first subscriber get protocol - hello server!
+ForkJoinPool-1-worker-13: first subscriber get protocol - 北京,你好!
+ForkJoinPool-1-worker-13: second subscriber get protocol - hello server!
+ForkJoinPool-1-worker-13: second subscriber get protocol - 北京,你好!
 ```  
 
 ####UPDATE  
@@ -34,3 +34,7 @@ ForkJoinPool-1-worker-13: get info - 北京,你好!, uuid: 1, length: 14
 3. fix Negative Exception when msg length capacity over 7 byte.
 4. fix socket send message loss bug under multi-thread.
 5. open limit length of load.  
+
+2016.03.25
+1. change connect and read operation to a real observable stream
+2. test use case fix cold observable caused `ReadPendingException` by multi reading same socket.
