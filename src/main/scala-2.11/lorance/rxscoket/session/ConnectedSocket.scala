@@ -5,55 +5,61 @@ import java.nio.channels.{CompletionHandler, AsynchronousSocketChannel}
 
 import lorance.rxscoket.session.exception.ReadResultNegativeException
 import lorance.rxscoket._
-import rx.lang.scala.Observable
+import rx.lang.scala.schedulers.NewThreadScheduler
+import rx.lang.scala.{Subscription, Subscriber, Observable}
 
+import scala.collection.mutable
 import scala.concurrent.{Future, Promise}
 import scala.util.{Success, Failure}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
   private val readerDispatch = new ReaderDispatch()
+  private val readSubscribes = mutable.Set[Subscriber[Vector[CompletedProto]]]()
 
-  def disconnect(): Unit = {
-    socketChannel.close()
-  }
+  private def append(s: Subscriber[Vector[CompletedProto]]) = readSubscribes.synchronized(readSubscribes += s)
+  private def remove(s: Subscriber[Vector[CompletedProto]]) = readSubscribes.synchronized(readSubscribes -= s)
+
+  def disconnect(): Unit = socketChannel.close()
 
   def startReading: Observable[Vector[CompletedProto]] = {
-    val readAttach = Attachment(ByteBuffer.allocate(10), socketChannel)
-
+    log(s"beginReading - ", 1)
+    beginReading
     Observable.apply[Vector[CompletedProto]]({ s =>
-      def readForever(): Unit = read(readAttach) onComplete {
+      append(s)
+      s.add(Subscription(remove(s)))
+    }).doOnCompleted {
+      log("socket read - doOnCompleted")
+    }.subscribeOn(NewThreadScheduler())
+  }
+
+  private def beginReading = {
+    val readAttach = Attachment(ByteBuffer.allocate(Configration.READBUFFER_LIMIT), socketChannel)
+    def beginReadingClosure: Unit = {
+      read(readAttach) onComplete {
         case Failure(f) =>
           f match {
             case e: ReadResultNegativeException =>
               log(s"$getClass - read finished")
-              s.onCompleted()
+              for (s <- readSubscribes) { s.onCompleted()}
             case _ =>
               log(s"unhandle exception - $f")
-              s.onError(f)
+              for (s <- readSubscribes) { s.onError(f)}
           }
         case Success(c) =>
           val src = c.byteBuffer
-          log(s"read success - ${src.array().length} bytes")
-          readerDispatch.receive(src).foreach(s.onNext)
-          readForever()
+          log(s"read success - ${src.array().length} bytes", 2)
+          readerDispatch.receive(src).foreach(protos => for (s <- readSubscribes) {s.onNext(protos)})
+          beginReadingClosure
       }
-      readForever()
-    }).doOnCompleted {
-      log("read socket - doOnCompleted")
     }
+    beginReadingClosure
   }
 
   /**
-    * it seems NOT support concurrent write, but not break as read.
+    * it seems NOT support concurrent write, but NOT break reading.
     * after many times test, later write request will be ignored when
     * under construct some write operation.
-    *
-    * TODO: Make a Queue to save write message, it's better then synchronized
-    * those method (input Queue is less cost)
-    *
-    * @param data
-    * @return
     */
   def send(data: ByteBuffer) = {
     val p = Promise[Unit]
@@ -76,9 +82,9 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
   private def read(readAttach: Attachment): Future[Attachment] = {
     val p = Promise[Attachment]
     val callback = new CompletionHandler[Integer, Attachment] {
-      override def completed(result: Integer, readAttach: Attachment): Unit = {
+      override def completed(result: Integer, attach: Attachment): Unit = {
         if (result != -1) {
-          p.trySuccess(readAttach)
+          p.trySuccess(attach)
         } else {
           disconnect()
           log(s"disconnected - result = -1")
@@ -87,7 +93,7 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
       }
 
       override def failed(exc: Throwable, attachment: Attachment): Unit = {
-        log(s"read I/O operations fails - $exc")
+        log(s"socket read I/O operations fails - $exc")
         p.tryFailure(exc)
       }
     }
