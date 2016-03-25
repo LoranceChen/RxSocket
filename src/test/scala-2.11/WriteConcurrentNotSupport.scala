@@ -4,10 +4,11 @@ import java.util.concurrent.TimeUnit
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
+import lorance.rxscoket.session._
 import lorance.rxscoket._
 
 /**
-  * socket.write is NOT support concurrent
+  * socket.write is NOT support concurrent - it has fixed by sync lock
   */
 object WriteConcurrentNotSupport extends DemoClientMain{
   def main(arg: Array[String]): Unit = {
@@ -18,8 +19,8 @@ object WriteConcurrentNotSupport extends DemoClientMain{
     val waitedS = Await.result(socket,Duration.apply(5, TimeUnit.SECONDS))
     val msg = """{"taskId": "threadname-timestamp" , "dataBase": "helloworld", "collection": "test", "method": "find", "params":{"match":{"name": "insertTest02"}}}"""
     val msg2 = """{"taskId222222": "threadname-timestamp" , "dataBase": "helloworld", "collection": "test", "method": "find", "params":{"match":{"name": "insertTest02"}}}"""
-    val data = ByteBuffer.wrap(enCoding(msg))
-    val data2 = ByteBuffer.wrap(enCoding(msg2))
+    val data = ByteBuffer.wrap(enCode(1.toByte, msg))
+    val data2 = ByteBuffer.wrap(enCode(1.toByte, msg2))
     waitedS.send(data)
     waitedS.send(data2)
 
@@ -51,9 +52,4 @@ object WriteConcurrentNotSupport extends DemoClientMain{
 
     Thread.currentThread().join()
   }
-
-
-
-
-
 }
