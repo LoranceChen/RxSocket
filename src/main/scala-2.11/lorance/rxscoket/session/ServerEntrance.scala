@@ -4,13 +4,18 @@ import java.net.InetSocketAddress
 import java.nio.channels.{CompletionHandler, AsynchronousSocketChannel, AsynchronousServerSocketChannel}
 
 import lorance.rxscoket._
-import rx.lang.scala.Observable
+import rx.lang.scala.{Subscription, Subscriber, Observable}
 
 import scala.concurrent.{Promise, Future}
 import scala.util.{Success, Failure}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.collection.mutable
 
 class ServerEntrance(host: String, port: Int) {
+  private val connectionSubs = mutable.Set[Subscriber[ConnectedSocket]]()
+  private def append(s: Subscriber[ConnectedSocket]) = connectionSubs.synchronized(connectionSubs += s)
+  private def remove(s: Subscriber[ConnectedSocket]) = connectionSubs.synchronized(connectionSubs -= s)
+
   val server: AsynchronousServerSocketChannel = {
     val server = AsynchronousServerSocketChannel.open
     val socketAddress: InetSocketAddress = new InetSocketAddress(host, port)
@@ -23,28 +28,34 @@ class ServerEntrance(host: String, port: Int) {
     * listen connection and emit every times connects event.
     */
   def listen: Observable[ConnectedSocket] = {
-    val f = connection(server)
-    Observable.apply[ConnectedSocket]({ s =>
+    log("listen begin - ", 1)
+    connectForever
 
-      /**
-        * It's not a recursion actually because future will return immediately.
-        * this times method has return when next invoke of `connectForever` occurred.
-        */
-      def connectForever(f: Future[AsynchronousSocketChannel]): Unit = {
-        f.onComplete {
-          case Failure(e) =>
-            s.onError(e)
-          case Success(c) =>
-            s.onNext(new ConnectedSocket(c))
-            log(s"client connected")
-            val nextConn = connection(server)
-            connectForever(nextConn)
-        }
-      }
-      connectForever(f)
+    Observable.apply[ConnectedSocket]({ s =>
+      append(s)
+      s.add(Subscription(remove(s)))
     }).doOnCompleted {
       log("socket connection - doOnCompleted")
     }
+  }
+
+  private def connectForever = {
+    log("connect loop begin -", 1)
+    val f = connection(server)
+
+    def connectForeverHelper(f: Future[AsynchronousSocketChannel]): Unit = {
+      f.onComplete {
+        case Failure(e) =>
+          for(s <- connectionSubs) {s.onError(e)}
+        case Success(c) =>
+          log(s"client connected")
+          val connectedSocket = new ConnectedSocket(c)
+          for(s <- connectionSubs) {s.onNext(connectedSocket)}
+          val nextConn = connection(server)
+          connectForeverHelper(nextConn)
+      }
+    }
+    connectForeverHelper(f)
   }
 
   private def connection(server: AsynchronousServerSocketChannel) = {
