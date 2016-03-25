@@ -8,6 +8,12 @@ object Configration {
   /**
     * class TempBuffer's limit field
     */
+  var READBUFFER_LIMIT = 256
+
+  /**
+    * todo
+    * class TempBuffer's limit field
+    */
   var TEMPBUFFER_LIMIT = 1024
 
   /**
@@ -19,7 +25,7 @@ object Configration {
 
   /**
     * todo
-    * proto package context Length
+    * proto package context Length (byte)
     */
-  var PACKAGE_CONTEXT_LENGTH = 8
+  var PACKAGE_CONTEXT_LENGTH = Int.MaxValue
 }
