@@ -55,3 +55,6 @@ Response json
  it's good to detect error if data structure NOT match.
  2. ... todo
  
+####TODO
+* expose json taskId as boolean, it will reorganized by thread name and system nano time
+before send.
