@@ -9,7 +9,7 @@ import rx.lang.scala.Observable
 
 import scala.concurrent.{Promise, Future}
 
-class JProtocol(connectedSocket: ConnectedSocket, read: Observable[Vector[CompletedProto]]) {//extends ConnectedSocket {
+class JProtocol(connectedSocket: ConnectedSocket, read: Observable[Vector[CompletedProto]]) {
   def send(any: Any) = {
     val bytes = JsonParse.enCode(any)
   connectedSocket.send(ByteBuffer.wrap(bytes))
@@ -56,7 +56,9 @@ class JProtocol(connectedSocket: ConnectedSocket, read: Observable[Vector[Comple
       protos.map(tryParseToJson).filter(_.nonEmpty).map(_.get)
     }
 
-    val obvTask = tProtos.map(_.find(_.taskId == taskId))
+//    val obvTask = tProtos.map(_.find(_.taskId == taskId))
+    val obvTask = tProtos.map(_.find(_.taskId == taskId))//todo use `takeUntil` finish the task stream
+
     obvTask.subscribe{task =>
       if(task.nonEmpty) {
         p.trySuccess(task.get)
