@@ -5,7 +5,7 @@ version := "0.7-SNAPSHOT"
 scalaVersion := "2.11.7"
 
 libraryDependencies ++= Seq(
-  "com.netflix.rxjava" % "rxjava-scala" % "0.20.7",
+  "io.reactivex" %% "rxscala" % "0.26.0",
   "net.liftweb" %% "lift-json" % "3.0-M8"
 )
 
