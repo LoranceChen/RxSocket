@@ -2,11 +2,13 @@ package lorance.rxscoket.presentation.json
 
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.{TimeoutException, TimeUnit}
 
 import lorance.rxscoket._
 import lorance.rxscoket.session.{CompletedProto, ConnectedSocket}
 import rx.lang.scala.Observable
 
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Promise, Future}
 
 class JProtocol(connectedSocket: ConnectedSocket, read: Observable[Vector[CompletedProto]]) {
@@ -48,24 +50,27 @@ class JProtocol(connectedSocket: ConnectedSocket, read: Observable[Vector[Comple
           try {
             Some(JsonParse.deCode[T](jsonResult))
           } catch {
-            case e: Throwable => None
+            case e: Throwable =>
+              //todo throw a special exception
+              log(s"find taskId but can't extract string - ${jsonResult} to class - ${mf.runtimeClass}")
+              None
           }
         }
       }
-      // make sure all elem is Json extracted T class
+
       protos.map(tryParseToJson).filter(_.nonEmpty).map(_.get)
-    }
+    }.takeUntil(x => x.exists(_.taskId == taskId))// todo does it matter for memory leaking?
 
-//    val obvTask = tProtos.map(_.find(_.taskId == taskId))
-    val obvTask = tProtos.map(_.find(_.taskId == taskId))//todo use `takeUntil` finish the task stream
+    val obvTask = tProtos.map(_.find(_.taskId == taskId)).timeout(Duration(presentation.TIMEOUT, TimeUnit.SECONDS))
 
-    obvTask.subscribe{task =>
-      if(task.nonEmpty) {
+    obvTask.subscribe((task: Option[T]) =>
+      if (task.nonEmpty) {
         p.trySuccess(task.get)
-      }
-    }
+      }, (error: Throwable) => error match {
+      case te: TimeoutException => log(s"wait task - $taskId timeout")
+      //todo should throw out?
+    })
 
     p.future
   }
 }
-
