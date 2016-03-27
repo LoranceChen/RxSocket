@@ -48,7 +48,7 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
           }
         case Success(c) =>
           val src = c.byteBuffer
-          log(s"read success - ${src.array().length} bytes", 2)
+          log(s"read success - ${src.position} bytes", 2)
           readerDispatch.receive(src).foreach(protos => for (s <- readSubscribes) {s.onNext(protos)})
           beginReadingClosure
       }
