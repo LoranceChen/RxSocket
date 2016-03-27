@@ -11,4 +11,6 @@ package object presentation {
     log(s"taskId - $id", 2)
     id
   }
+
+  val TIMEOUT = 5 //seconds
 }
