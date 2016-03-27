@@ -50,3 +50,5 @@ v0.7.1 - .3
 * adds useful observable on special event
 * handle reconnect and relative notification.
 * setting async operates timeout limit.
+
+* need read Queue and write Queue - ensure same request thread i/o socket with FIFO.
