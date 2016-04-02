@@ -8,9 +8,9 @@ package object presentation {
     val threadName = Thread.currentThread().getName
     val timestamp = System.nanoTime()
     val id = threadName + timestamp
-    log(s"taskId - $id", 2)
+    log(s"taskId - $id", 10)
     id
   }
 
-  val TIMEOUT = 5 //seconds
+  var TIMEOUT = 3 //seconds
 }

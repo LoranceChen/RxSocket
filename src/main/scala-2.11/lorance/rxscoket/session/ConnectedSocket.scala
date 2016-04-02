@@ -5,7 +5,7 @@ import java.nio.channels.{CompletionHandler, AsynchronousSocketChannel}
 
 import lorance.rxscoket.session.exception.ReadResultNegativeException
 import lorance.rxscoket._
-import rx.lang.scala.schedulers.NewThreadScheduler
+import lorance.rxscoket.session.implicitpkg._
 import rx.lang.scala.{Subscription, Subscriber, Observable}
 
 import scala.collection.mutable
@@ -22,7 +22,7 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
 
   def disconnect(): Unit = socketChannel.close()
 
-  def startReading: Observable[Vector[CompletedProto]] = {
+  lazy val startReading: Observable[Vector[CompletedProto]] = {
     log(s"beginReading - ", 1)
     beginReading
     Observable.apply[Vector[CompletedProto]]({ s =>
@@ -30,11 +30,12 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
       s.add(Subscription(remove(s)))
     }).doOnCompleted {
       log("socket read - doOnCompleted")
-    }.subscribeOn(NewThreadScheduler())
+    }
   }
 
   private def beginReading = {
     val readAttach = Attachment(ByteBuffer.allocate(Configration.READBUFFER_LIMIT), socketChannel)
+
     def beginReadingClosure: Unit = {
       read(readAttach) onComplete {
         case Failure(f) =>
@@ -49,7 +50,9 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
         case Success(c) =>
           val src = c.byteBuffer
           log(s"read success - ${src.position} bytes", 2)
-          readerDispatch.receive(src).foreach(protos => for (s <- readSubscribes) {s.onNext(protos)})
+          readerDispatch.receive(src).foreach{protos =>
+            log(s"dispatched protos - ${protos.map(p => p.loaded.array().string)}",3)
+            for (s <- readSubscribes) {s.onNext(protos)}}
           beginReadingClosure
       }
     }
@@ -98,7 +101,13 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
       }
     }
 
-    socketChannel.read(readAttach.byteBuffer, readAttach, callback)
+    //todo if throw this exception does readAttach lead to memory leak
+    try {
+      socketChannel.read(readAttach.byteBuffer, readAttach, callback)
+    } catch {
+      case t: Throwable => log(s"[Throw] - $t", 0)//the throwable sometimes not show throw message to console (really amazing), so I add this log
+    }
+
     p.future
   }
 }
