@@ -1,21 +1,17 @@
 package lorance.rxscoket.presentation.json
 
 import java.nio.ByteBuffer
-import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
 
 import lorance.rxscoket._
 import lorance.rxscoket.session.{CompletedProto, ConnectedSocket}
 import lorance.rxscoket.session.implicitpkg._
-import rx.lang.scala.{Subject, Observable}
+import rx.lang.scala.Observable
 
 import scala.concurrent.duration.Duration
 
 /**
   * create a JProtocol to dispatch all json relate info bind with socket and it's read stream
-  *
-  * @param connectedSocket
-  * @param read
   */
 class JProtocol(connectedSocket: ConnectedSocket, val read: Observable[Vector[CompletedProto]]) {
 //  val readHot = read.publish
@@ -26,15 +22,14 @@ class JProtocol(connectedSocket: ConnectedSocket, val read: Observable[Vector[Co
   }
 
   /**
-    * if need a response should has a taskId
-    * todo add receive method deal with protocol
+    * if need a response take taskId please
     *
-    * @param any
-    * @tparam Result dao return json extractable class
+    * @tparam Result return json extractable class
     * @return
     */
   def sendWithResult[Result <: IdentityTask, Req <: IdentityTask](any: Req, whileOpt: Option[Result => Boolean] = None)(implicit mf: Manifest[Result]) = {
     val bytes = JsonParse.enCode(any)
+
     //prepare stream before send msg
     val o = taskResult[Result](any.taskId)(whileOpt)
     connectedSocket.send(ByteBuffer.wrap(bytes))
@@ -47,13 +42,7 @@ class JProtocol(connectedSocket: ConnectedSocket, val read: Observable[Vector[Co
     * return: Observable[T]
     */
   private def taskResult[T <: IdentityTask](taskId: String)(whileOpt: Option[T => Boolean])(implicit mf: Manifest[T]): Observable[T] = {
-    log(s"enter `taskResult` - $taskId", 2)
-//    val p = Promise[T]
-    /**
-      * Vector[CompletedProto] -> Vector[T]
-      * 1. Vector[CompletedProto] -> map -> Option[Vector[T]]
-      * 2. Vector[Option[T]] -> filter -> Vector[T]
-      */
+    log(s"enter `taskResult` - $taskId", 15)
 
     def containsJson(proto: CompletedProto) = if (proto.uuid == 1.toByte) Some(proto) else None
     def tryParseToJson(proto: CompletedProto) = {
@@ -79,27 +68,5 @@ class JProtocol(connectedSocket: ConnectedSocket, val read: Observable[Vector[Co
 
     if (whileOpt.isEmpty) theTaskEvent
     else theTaskEvent.takeWhile(whileOpt.get)
-
-
-    //    val tProtos = read.map { protos =>
-//      protos.map(tryParseToJson).filter(x => x.nonEmpty).map(_.get)
-//    }//.takeUntil(x => x.exists(_.taskId == taskId))// todo does it matter for memory leaking?
-
-//    tProtos.map(_.find(_.taskId == taskId)).filter(_.isDefined).map(_.get).takeUntil(until).timeout(Duration(presentation.TIMEOUT, TimeUnit.SECONDS))
-//    val r = tProtos.map(_.find(_.taskId == taskId)).filter(_.isDefined).map(_.get).timeout(Duration(presentation.TIMEOUT, TimeUnit.SECONDS))
-//    r
-
-//    obvTask.subscribe((task: Option[T]) =>
-//      if (task.nonEmpty) {
-//        p.trySuccess(task.get)
-//      }, (error: Throwable) => error match {
-//      case te: TimeoutException => log(s"wait task - $taskId timeout")
-//      todo should throw out?
-//    })
-
-//    p.future
   }
-
-  //TODO need a raw sender
-//  def
 }
