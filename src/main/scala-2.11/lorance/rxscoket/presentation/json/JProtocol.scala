@@ -40,25 +40,10 @@ class JProtocol(connectedSocket: ConnectedSocket, val read: Observable[Vector[Co
     connectedSocket.send(ByteBuffer.wrap(bytes))
     o
   }
-//
-//  def sendWithResultTest[Result <: IdentityTask, Req <: IdentityTask](any: Req)(implicit mf: Manifest[Result]) = {
-//    val bytes = JsonParse.enCode(any)
-//    connectedSocket.send(ByteBuffer.wrap(bytes))
-//
-////    val subject = Subject[Vector[CompletedProto]]()
-////    val sed = read.publish
-//    val x = read.map(s =>
-//      log(s"sendWithResultTest - ${s.map(x => x.loaded.array().string)}")
-//    )
-////    sed.connect
-//    x
-//  }
-
 
   /**
-    * TODO
     * Q: when gc deal with those temp observable?
-    *
+    * A: Yes, because we use whileOpt parameter and timeout limit.It will become non-refer.
     * return: Observable[T]
     */
   private def taskResult[T <: IdentityTask](taskId: String)(whileOpt: Option[T => Boolean])(implicit mf: Manifest[T]): Observable[T] = {
