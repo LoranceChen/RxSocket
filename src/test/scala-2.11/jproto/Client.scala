@@ -50,7 +50,7 @@ object DemoClientMain extends App {
 //      val x = sendJProtocol.flatMap(l => l.sendWithResultTest[Rst, Req](Req("thread-time", lineJStr)))//.publish
 
 //      x.connect
-      val x2 = sendJProtocol.flatMap(l => l.sendWithResult[Rst, Req](Req("thread-time", lineJStr), Some(rst => rst.data.nonEmpty)))//.publish
+      val x2 = sendJProtocol.flatMap(l => l.sendWithResult[Rst, Req](Req("thread-time", lineJStr), Some(rst => rst.takeWhile(_.data.nonEmpty))))//.publish
 
 //      x2.connect
 

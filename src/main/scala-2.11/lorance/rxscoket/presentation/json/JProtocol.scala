@@ -27,11 +27,13 @@ class JProtocol(connectedSocket: ConnectedSocket, val read: Observable[Vector[Co
     * @tparam Result return json extractable class
     * @return
     */
-  def sendWithResult[Result <: IdentityTask, Req <: IdentityTask](any: Req, whileOpt: Option[Result => Boolean] = None)(implicit mf: Manifest[Result]) = {
+  def sendWithResult[Result <: IdentityTask, Req <: IdentityTask]
+                    (any: Req, additional: Option[Observable[Result] => Observable[Result]])
+                    (implicit mf: Manifest[Result]) = {
     val bytes = JsonParse.enCode(any)
 
     //prepare stream before send msg
-    val o = taskResult[Result](any.taskId)(whileOpt)
+    val o = taskResult[Result](any.taskId, additional)
     connectedSocket.send(ByteBuffer.wrap(bytes))
     o
   }
@@ -41,7 +43,9 @@ class JProtocol(connectedSocket: ConnectedSocket, val read: Observable[Vector[Co
     * A: Yes, because we use whileOpt parameter and timeout limit.It will become non-refer.
     * return: Observable[T]
     */
-  private def taskResult[T <: IdentityTask](taskId: String)(whileOpt: Option[T => Boolean])(implicit mf: Manifest[T]): Observable[T] = {
+  private def taskResult[T <: IdentityTask](taskId: String,
+                                            additional: Option[Observable[T] => Observable[T]])
+                                           (implicit mf: Manifest[T]): Observable[T] = {
     log(s"enter `taskResult` - $taskId", 15)
 
     def containsJson(proto: CompletedProto) = if (proto.uuid == 1.toByte) Some(proto) else None
@@ -66,7 +70,7 @@ class JProtocol(connectedSocket: ConnectedSocket, val read: Observable[Vector[Co
       map(_.get).
       timeout(Duration(presentation.TIMEOUT, TimeUnit.SECONDS))
 
-    if (whileOpt.isEmpty) theTaskEvent
-    else theTaskEvent.takeWhile(whileOpt.get)
+    if(additional.isEmpty) theTaskEvent
+    else additional.get(theTaskEvent)
   }
 }
