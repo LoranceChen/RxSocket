@@ -1,6 +1,6 @@
 name := "RxSocket"
 
-version := "0.7.5-SNAPSHOT"
+version := "0.8-SNAPSHOT"
 
 scalaVersion := "2.11.7"
 
