@@ -52,7 +52,7 @@ class JProtocol(connectedSocket: ConnectedSocket, val read: Observable[Vector[Co
     def tryParseToJson(proto: CompletedProto) = {
       containsJson(proto).flatMap { jsonProto =>
         val jsonResult = jsonProto.loaded.array().string
-        log(s"JProtocol taskId - $taskId" + jsonResult)
+        log(s"JProtocol taskId - $taskId, loaded - $jsonResult")
         try {
           Some(JsonParse.deCode[T](jsonResult))
         } catch {
