@@ -58,3 +58,6 @@ Response json
 ####TODO
 * expose json taskId as boolean, it will reorganized by thread name and system nano time
 before send.
+
+####Bug
+sendWithResult can't ensure right sequence form dispatch.
