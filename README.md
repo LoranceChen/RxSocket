@@ -51,7 +51,7 @@ v0.8.1
 * json format communicate easy and scalable
 * adds try-catch for breakable event
 * adds useful observable on special event
-* handle reconnect and relative notification.
-* setting async operates timeout limit.
-* need read Queue and write Queue - ensure same request thread i/o socket with FIFO.
-* log method add class path
+* handle reconnect and relative notification
+* setting async operates timeout limit
+* need read Queue and write Queue - ensure same request thread i/o socket with FIFO
+* log method add class path: replace Int log level by readable words. Related by package, class and importance.

@@ -22,16 +22,9 @@ object DemoServerMain extends App {
     * Why use hot: It's really sad, the `map` make subscribe exec map body every times.so `stratReading` caused failure of
     */
   val read = socket.map(l => (l, l.startReading))
-  //read.connect
 
+  case class Req(taskId: String, req: String) extends IdentityTask
   case class Rst(taskId: String, data: Option[String]) extends IdentityTask
-
-//  read.subscribe { x =>
-//    log(s"receive form connect - ${x}")
-//    val b = JsonParse.enCode(Rst("thread-time", Some("content")))
-//    Thread.sleep(1000)
-//    x.send(ByteBuffer.wrap(b))
-//  }
 
   read.flatMap(x => x._2).subscribe(x => log(s"x - ${x.map(x => x.loaded.array().string)}"))
 
@@ -44,8 +37,9 @@ object DemoServerMain extends App {
     x._2.subscribe{ x =>
       val b1 = JsonParse.enCode(Rst("thread-time", Some("content" + seq)))
       val b2 = JsonParse.enCode(Rst("thread-time", Some("content" + seq * 10)))
+      val b5 = JsonParse.enCode(Rst("thread-time", Some("content" + seq * 100)))
       val b3 = JsonParse.enCode(Rst("thread-time", None))
-      val b4 = JsonParse.enCode(Rst("thread-time", Some("content" + seq * 100)))
+      val b4 = JsonParse.enCode(Rst("thread-time", Some("content" + seq * 1000)))
 
       log("seq - " + seq)
 
@@ -53,13 +47,19 @@ object DemoServerMain extends App {
 
       sk.send(ByteBuffer.wrap(b1))
       sk.send(ByteBuffer.wrap(b2))
+      sk.send(ByteBuffer.wrap(b5))
       sk.send(ByteBuffer.wrap(b3))
       sk.send(ByteBuffer.wrap(b4))
     }
   }
-//  x.connect
-
-
-  x.subscribe(x => log(s"some thing connected:"))
+x.subscribe()
+//  val jread = read.map(x => new JProtocol(x._1, x._2))
+//  jread.subscribe{x =>
+//
+//    x.send(Rst("taskId", Some("content1")))
+//    x.send(Rst("taskId", Some("content3")))
+//    x.send(Rst("taskId", Some("content2")))
+//    x.send(Rst("taskId", None))
+//  }
   Thread.currentThread().join()
 }

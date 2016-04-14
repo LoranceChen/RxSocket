@@ -46,13 +46,7 @@ object DemoClientMain extends App {
     while (true) {
       log(s"input message:")
       val lineJStr = StdIn.readLine()
-//      val x = sendJProtocol.flatMap(l => l.sendWithResult[Rst, Req](Req("thread-time", lineJStr))(rst => rst.data.isEmpty)).publish
-//      val x = sendJProtocol.flatMap(l => l.sendWithResultTest[Rst, Req](Req("thread-time", lineJStr)))//.publish
-
-//      x.connect
-      val x2 = sendJProtocol.flatMap(l => l.sendWithResult[Rst, Req](Req("thread-time", lineJStr), Some(rst => rst.takeWhile(_.data.nonEmpty))))//.publish
-
-//      x2.connect
+      val x2 = sendJProtocol.flatMap(l => l.sendWithResult[Rst, Req](Req("thread-time", lineJStr), Some(rst => rst.takeUntil(_.data.isEmpty))))//.publish
 
       x2.subscribe(
         i => log(s"get result of the task - $i"),
@@ -62,18 +56,6 @@ object DemoClientMain extends App {
         },
         () => log(s"task complete")
       )
-
-      //log(s"Rst - $i"))
-//      x.subscribe(i => "")//log(s"Rst - $i"))
-//      x.subscribe(i => "")//log(s"Rst - $i"))
-
-//      val data = ByteBuffer.wrap(enCode(0.toByte, """{"key":"value"}"""))
-//      socket.flatMap { s => {
-//        s.send(data)
-//      }}
-//      p.connects
-//      x.connect
-//
     }
   }
 
@@ -84,49 +66,6 @@ object DemoClientMain extends App {
   }
 
   new Thread(runnable).start()
-
-  Thread.currentThread().join()
-}
-
-//object TestFlatmap extends App {
-//  val f = Future(1)
-//  val obv = Observable.from(f).map(x => ("x", Observable.just(11))).publish
-//  val b2 = obv.flatMap{x =>log("flat"); x._2}
-//  b2.subscribe(c => log(c.toString))
-//  obv.connect
-//
-//
-//  val obv2 = Observable.from(f).map(x => ("x", Observable.just(12))).publish
-//  val b22 = obv2.flatMap(x => x._2)
-//  b22.subscribe(c => log(c.toString))
-//  obv2.connect
-//}
-
-object TestMap extends App {
-  val sub = Observable.just(1,2,3)
-
-//  val runnable = new Runnable {
-//    override def run(): Unit = {
-//      while (true) {
-//        val str =  StdIn.readLine()
-//        sub.onNext(str)
-//      }
-//    }
-//  }
-
-//  new Thread(runnable).start()
-
-  val x = sub.publish
-
-  val maped = x.map{s =>
-    log(s"observer - ${s}")
-    s
-  }.publish
-  maped.connect
-
-  x.connect
-
-  maped.subscribe(s => log(s"$s"))
 
   Thread.currentThread().join()
 }
