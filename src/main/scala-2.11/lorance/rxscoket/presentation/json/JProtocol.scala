@@ -52,9 +52,14 @@ class JProtocol(connectedSocket: ConnectedSocket, val read: Observable[Vector[Co
     def tryParseToJson(proto: CompletedProto) = {
       containsJson(proto).flatMap { jsonProto =>
         val jsonResult = jsonProto.loaded.array().string
-        log(s"JProtocol taskId - $taskId, loaded - $jsonResult")
         try {
-          Some(JsonParse.deCode[T](jsonResult))
+          import net.liftweb.json._
+          (parse(jsonResult) \ "taskId").values match {
+            case task: String if task == taskId =>
+            log(s"JProtocol taskId - $taskId, loaded - $jsonResult")
+            Some(JsonParse.deCode[T](jsonResult))
+            case _ => None
+          }
         } catch {
           case e: Throwable =>
             //todo throw a special exception
