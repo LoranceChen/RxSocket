@@ -50,6 +50,8 @@ v0.7.1 - .3
 * adds useful observable on special event
 * handle reconnect and relative notification.
 * setting async operates timeout limit.
-
 * need read Queue and write Queue - ensure same request thread i/o socket with FIFO.
 * log method add class path
+
+####WARNING
+json presentation layer has bug which can't ensure dispatched data as read stream sequence!!!!
