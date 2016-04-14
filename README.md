@@ -52,3 +52,4 @@ v0.7.1 - .3
 * setting async operates timeout limit.
 
 * need read Queue and write Queue - ensure same request thread i/o socket with FIFO.
+* log method add class path
