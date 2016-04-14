@@ -1,4 +1,4 @@
-# RxSocket - v0.7.3
+# RxSocket - v0.8.1
 socket with reactive style.
 
 ## Example
@@ -39,9 +39,12 @@ ForkJoinPool-1-worker-13: second subscriber get protocol - 北京,你好!
 1. change connect and read operation to a real observable stream  
 2. test use case fix cold observable caused `ReadPendingException` by multi reading same socket.
 
-v0.7.1 - .3
+v0.7.1 - 0.7.3
 * adds json presentation extractor error log
 * keep temp json task observable form leak. (Does it works?)
+
+v0.8.1
+* fix bug: json presentation `sendWithResult` method NOT filter specify taskId.
 
 ####Roadmap
 * completely multi-thread support
@@ -52,6 +55,3 @@ v0.7.1 - .3
 * setting async operates timeout limit.
 * need read Queue and write Queue - ensure same request thread i/o socket with FIFO.
 * log method add class path
-
-####WARNING
-json presentation layer has bug which can't ensure dispatched data as read stream sequence!!!!
