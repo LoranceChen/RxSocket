@@ -14,7 +14,7 @@ object Configration {
     * todo
     * class TempBuffer's limit field
     */
-  var TEMPBUFFER_LIMIT = 1024
+  var TEMPBUFFER_LIMIT = 1024 * 8 //byte
 
   /**
     * todo

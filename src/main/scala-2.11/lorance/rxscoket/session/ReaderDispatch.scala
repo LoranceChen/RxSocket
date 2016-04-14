@@ -5,12 +5,12 @@ import java.nio.ByteBuffer
 import lorance.rxscoket.session
 import lorance.rxscoket.session.exception.TmpBufferOverLoadException
 import lorance.rxscoket.session.implicitpkg._
-
+import lorance.rxscoket.log
 import scala.annotation.tailrec
 /**
   * one map to for every socket
   */
-class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Int.MaxValue) {//extends Subject[]{
+class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Configration.TEMPBUFFER_LIMIT) {//extends Subject[]{
   def this() {
     this(PaddingProto(None, None, session.EmptyByteBuffer))
   }
@@ -42,7 +42,11 @@ class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Int.Ma
             bf.get(lengthByte, 0, remaining)
             Some(PendingLength(lengthByte, remaining))
           }
-          else Some(CompletedLength(bf.getInt()))
+          else {
+            val length = bf.getInt()
+            log(s"${this.getClass.toString} : get length - $length", 15)
+            Some(CompletedLength(length))
+          }
         case pendingOpt @ Some(pendingLength) =>
           val need = 4 - pendingLength.arrivedNumber
           if (remaining >= need) {
@@ -72,17 +76,21 @@ class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Int.Ma
         tmpProto = PaddingProto(paddingProto.uuidOpt, paddingProto.lengthOpt, newBf.put(src))
         None
       } else {
-        tmpProto = PaddingProto(None,None, session.EmptyByteBuffer)
+        tmpProto = PaddingProto(None, None, session.EmptyByteBuffer)
         val newAf = new Array[Byte](length)
         src.get(newAf, 0, length)
         val completed = CompletedProto(paddingProto.uuidOpt.get, length, ByteBuffer.wrap(newAf))
+        log(s"${this.getClass.toString} : get protocol - ${(completed.uuid, completed.length, new String(completed.loaded.array))}", 15)
         Some(completed)
       }
     }
     tmpProto match {
       case PaddingProto(None, _, _) =>
         val uuidOpt = tryGetByte(src)
-        val lengthOpt = uuidOpt.flatMap{uuid => tryGetLength(src, None)}
+        val lengthOpt = uuidOpt.flatMap{uuid =>
+          log(s"${this.getClass.toString} : get uuid - $uuid", 15)
+          tryGetLength(src, None)
+        }
         val protoOpt = lengthOpt.flatMap {
           case CompletedLength(length) =>
             if (length > maxLength) throw new TmpBufferOverLoadException()
@@ -95,6 +103,7 @@ class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Int.Ma
               val newAf = new Array[Byte](length)
               src.get(newAf, 0, length)
               val completed = CompletedProto(uuidOpt.get, length, ByteBuffer.wrap(newAf))
+              log(s"${this.getClass.toString} : get protocol - ${(completed.uuid, completed.length, new String(completed.loaded.array))}", 15)
               Some(completed)
             }
           case PendingLength(arrived, number) =>
@@ -148,7 +157,9 @@ class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Int.Ma
           val needLength =  length - padding.position()
           val newAf = new Array[Byte](needLength)
           src.get(newAf, 0, needLength)
+
           val completed = CompletedProto(uuid, length, padding.put(newAf))
+          log(s"${this.getClass.toString} : get protocol - ${(completed.uuid, completed.length, new String(completed.loaded.array))}", 15)
           Some(completed)
         }
         protoOpt match {
