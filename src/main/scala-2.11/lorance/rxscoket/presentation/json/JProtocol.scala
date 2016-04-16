@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit
 import lorance.rxscoket._
 import lorance.rxscoket.session.{CompletedProto, ConnectedSocket}
 import lorance.rxscoket.session.implicitpkg._
+import net.liftweb.json.JsonAST.JValue
 import rx.lang.scala.Observable
 
 import scala.concurrent.duration.Duration
@@ -14,10 +15,13 @@ import scala.concurrent.duration.Duration
   * create a JProtocol to dispatch all json relate info bind with socket and it's read stream
   */
 class JProtocol(connectedSocket: ConnectedSocket, val read: Observable[Vector[CompletedProto]]) {
-//  val readHot = read.publish
-
   def send(any: Any) = {
     val bytes = JsonParse.enCode(any)
+    connectedSocket.send(ByteBuffer.wrap(bytes))
+  }
+
+  def send(jValue: JValue) = {
+    val bytes = JsonParse.enCode(jValue)
     connectedSocket.send(ByteBuffer.wrap(bytes))
   }
 
