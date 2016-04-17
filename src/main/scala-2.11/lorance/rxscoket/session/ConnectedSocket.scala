@@ -74,7 +74,7 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
         }
 
         override def failed(exc: Throwable, attachment: Int): Unit = {
-          log(s"CompletionHandler - failed")
+          log(s"CompletionHandler fail - $exc")
           p.tryFailure(exc)
         }
       })
