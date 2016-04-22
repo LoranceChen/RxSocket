@@ -19,10 +19,15 @@ object JsonParse {
   def enCode(jValue: JValue) = session.enCode(1.toByte, compactRender(jValue))
   def enCode(jStr: String) = session.enCode(1.toByte, jStr)
 
-  def deCode[A](jsonString: String)(implicit mf: scala.reflect.Manifest[A]) = {
-    parse(jsonString).extract[A]
+  def deCode[A](jValue: JValue)(implicit mf: scala.reflect.Manifest[A]): A = {
+    jValue.extract[A]
   }
-  def deCode[A](jsonArray: Array[Byte])(implicit mf: scala.reflect.Manifest[A]) = {
-    parse(new String(jsonArray, StandardCharsets.UTF_8)).extract[A]
+
+  def deCode[A](jsonString: String)(implicit mf: scala.reflect.Manifest[A]): A = {
+    deCode(parse(jsonString))
+  }
+
+  def deCode[A](jsonArray: Array[Byte])(implicit mf: scala.reflect.Manifest[A]): A = {
+    deCode(parse(new String(jsonArray, StandardCharsets.UTF_8)))
   }
 }

@@ -7,9 +7,11 @@ import lorance.rxscoket._
 import lorance.rxscoket.session.{CompletedProto, ConnectedSocket}
 import lorance.rxscoket.session.implicitpkg._
 import net.liftweb.json.JsonAST.JValue
+import net.liftweb.json.JsonParser.ParseException
 import rx.lang.scala.Observable
 
 import scala.concurrent.duration.Duration
+import net.liftweb.json._
 
 /**
   * create a JProtocol to dispatch all json relate info bind with socket and it's read stream
@@ -52,23 +54,27 @@ class JProtocol(connectedSocket: ConnectedSocket, val read: Observable[Vector[Co
                                            (implicit mf: Manifest[T]): Observable[T] = {
     log(s"enter `taskResult` - $taskId", 15)
 
-    def containsJson(proto: CompletedProto) = if (proto.uuid == 1.toByte) Some(proto) else None
+    def jsonLoadOpt(proto: CompletedProto) = if (proto.uuid == 1.toByte) {
+      try{
+        Some(parse(proto.loaded.array().string))
+      } catch {
+        case e: ParseException => None
+      }
+    } else None
+
     def tryParseToJson(proto: CompletedProto) = {
-      containsJson(proto).flatMap { jsonProto =>
-        val jsonResult = jsonProto.loaded.array().string
-        try {
-          import net.liftweb.json._
-          (parse(jsonResult) \ "taskId").values match {
-            case task: String if task == taskId =>
-            log(s"JProtocol taskId - $taskId, loaded - $jsonResult")
-            Some(JsonParse.deCode[T](jsonResult))
-            case _ => None
-          }
-        } catch {
-          case e: Throwable =>
-            //todo throw a special exception
-            log(s"find taskId but can't extract it, $jsonResult, to class - ${mf.runtimeClass}", 3)
-            None
+      jsonLoadOpt(proto).flatMap { jsonProto =>
+        (jsonProto \ "taskId").values match {
+          case task: String if task == taskId =>
+            log(s"JProtocol taskId - $taskId, loaded - $jsonProto")
+            try {
+              Some(JsonParse.deCode[T](jsonProto))
+            } catch {
+              case e: MappingException =>
+                log(s"find taskId but can't extract it, $jsonProto, to class - ${mf.runtimeClass}", 3)
+                None
+            }
+          case _ => None
         }
       }
     }
