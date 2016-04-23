@@ -80,20 +80,21 @@ class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Config
         val newAf = new Array[Byte](length)
         src.get(newAf, 0, length)
         val completed = CompletedProto(paddingProto.uuidOpt.get, length, ByteBuffer.wrap(newAf))
-        log(s"${this.getClass.toString} : get protocol - ${(completed.uuid, completed.length, new String(completed.loaded.array))}", 15)
+        log(s"${this.getClass.toString} : get protocol - ${(completed.uuid, completed.length, new String(completed.loaded.array))}", -10)
         Some(completed)
       }
     }
     tmpProto match {
       case PaddingProto(None, _, _) =>
         val uuidOpt = tryGetByte(src)
+        tmpProto = PaddingProto(uuidOpt, None, null)
         val lengthOpt = uuidOpt.flatMap{uuid =>
           log(s"${this.getClass.toString} : get uuid - $uuid", 15)
           tryGetLength(src, None)
         }
         val protoOpt = lengthOpt.flatMap {
           case CompletedLength(length) =>
-            if (length > maxLength) throw new TmpBufferOverLoadException()
+            if (length > maxLength) throw new TmpBufferOverLoadException(s"length - ${length}")
             if(src.remaining() < length) {
               val newBf = ByteBuffer.allocate(length)
               tmpProto = PaddingProto(uuidOpt, lengthOpt, newBf.put(src))
@@ -103,7 +104,7 @@ class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Config
               val newAf = new Array[Byte](length)
               src.get(newAf, 0, length)
               val completed = CompletedProto(uuidOpt.get, length, ByteBuffer.wrap(newAf))
-              log(s"${this.getClass.toString} : get protocol - ${(completed.uuid, completed.length, new String(completed.loaded.array))}", 15)
+              log(s"${this.getClass.toString} : get protocol - ${(completed.uuid, completed.length, new String(completed.loaded.array))}", -10)
               Some(completed)
             }
           case PendingLength(arrived, number) =>
@@ -120,7 +121,8 @@ class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Config
         val lengthOpt = tryGetLength(src, None)
         val protoOpt = lengthOpt.flatMap {
           case CompletedLength(length) =>
-            readLoad(src, padding)
+            tmpProto = PaddingProto(Some(uuid), lengthOpt, session.EmptyByteBuffer)
+            readLoad(src, tmpProto)
           case PendingLength(_, _) =>
             tmpProto = PaddingProto(Some(uuid), lengthOpt, session.EmptyByteBuffer)
             None
@@ -159,7 +161,7 @@ class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Config
           src.get(newAf, 0, needLength)
 
           val completed = CompletedProto(uuid, length, padding.put(newAf))
-          log(s"${this.getClass.toString} : get protocol - ${(completed.uuid, completed.length, new String(completed.loaded.array))}", 15)
+          log(s"${this.getClass.toString} : get protocol - ${(completed.uuid, completed.length, new String(completed.loaded.array))}", -10)
           Some(completed)
         }
         protoOpt match {
