@@ -175,7 +175,7 @@ class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Config
 }
 
 /**
-  * form now on, socket communicate length/lengthOpt by byte.TODO with Int
+  * form now on, socket communicate length/lengthOpt with Int
   */
 abstract class BufferedProto
 case class PaddingProto(uuidOpt: Option[Byte],lengthOpt: Option[BufferedLength],loading: ByteBuffer)
