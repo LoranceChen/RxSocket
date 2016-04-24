@@ -48,10 +48,10 @@ class JProtocol(connectedSocket: ConnectedSocket, read: Observable[Vector[Comple
     def taskResult[T <: IdentityTask](taskId: String)
                                      (implicit mf: Manifest[T]) = {
       jRead.map { jsonProto =>
-        log(s"any JProtocol taskId - $taskId - $jsonProto - class - ${this}")
+        log(s"any JProtocol taskId - $taskId - $jsonProto - class - ${this}", 1000)
         jsonProto \ "taskId" match {
           case JString(task) if task == taskId =>
-            log(s"specify JProtocol taskId - $taskId, loaded - $jsonProto")
+            log(s"specify JProtocol taskId - $taskId, loaded - $jsonProto", 25)
             try {
               Some(JsonParse.deCode[T](jsonProto))
             } catch {
@@ -60,7 +60,7 @@ class JProtocol(connectedSocket: ConnectedSocket, read: Observable[Vector[Comple
                 None
             }
           case _ =>
-            log(s"other JProtocol taskId - $taskId, loaded - $jsonProto")
+            log(s"other JProtocol taskId - $taskId, loaded - $jsonProto", 1000)
             None
         }
       }.filter(_.isDefined).map(_.get).
