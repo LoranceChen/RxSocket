@@ -69,7 +69,7 @@ class JProtocol(connectedSocket: ConnectedSocket, read: Observable[Vector[Comple
         }
       }.filter(_.isDefined).map(_.get).
         timeout(Duration(presentation.TIMEOUT, TimeUnit.SECONDS)).
-        doOnError { e => log(s"throw to JProtocol Obv - $taskId - $e", 1) }
+        doOnError { e => log(s"[Throw] to JProtocol Obv - $taskId - $e", 1) }
     }
 
     val x = taskResult[Result](any.taskId)
