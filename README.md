@@ -29,7 +29,7 @@ ForkJoinPool-1-worker-13: second subscriber get protocol - 北京,你好!
 ```  
 
 ####JProtocol Performance test
-Server side
+#####Server side
 ```
 import lorance.rxscoket._
 import lorance.rxscoket.presentation.json.{IdentityTask, JProtocol}
@@ -61,7 +61,7 @@ object JProtoServer extends App {
 }
 ```
 
-Client side
+#####Client side
 ```
 import lorance.rxscoket._
 import lorance.rxscoket.presentation.json.{JProtocol, IdentityTask}
@@ -127,7 +127,8 @@ object JProtoClient extends App {
 }
 
 ```
-time cost with 1000 times simple call:
+#####Time cost on client request calling
+time cost with 1000 times simple call:  
 begin with - 1461494820230 timestamp  
 end with - 1461494821000 timestamp  
 every with result request spend <1 ms in local
