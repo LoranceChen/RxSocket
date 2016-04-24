@@ -14,7 +14,7 @@ object Configration {
     * todo
     * class TempBuffer's limit field
     */
-  var TEMPBUFFER_LIMIT = 100 //byte
+  var TEMPBUFFER_LIMIT = 1024 * 10 //10k byte
 
   /**
     * todo
@@ -28,4 +28,6 @@ object Configration {
     * proto package context Length (byte)
     */
   var PACKAGE_CONTEXT_LENGTH = Int.MaxValue
+
+  var CONNECT_TIME_LIMIT = 7 // second
 }

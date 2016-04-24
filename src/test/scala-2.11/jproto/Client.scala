@@ -9,6 +9,8 @@ import lorance.rxscoket.session._
 import rx.lang.scala.{Subject, Observable}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Success, Failure}
+
 //import lorance.rxscoket.session.execution.currentThread
 import scala.concurrent.{Promise, Future}
 import scala.io.StdIn
@@ -91,17 +93,24 @@ object InitBugClient extends App {
   case class OverviewRsp(result: Option[OverviewContent], taskId: String) extends IdentityTask
   case class OverviewContent(id: String)
 
-  logLevel = -14
+  logLevel = 1
 
   val client = new ClientEntrance("localhost", 10011)
-  val sr = client.connect.map(s => (s, s.startReading))
-  val jproto = sr.map { x => log("init jProtocol - ", -20); new JProtocol(x._1, x._2) }
+  val connect = client.connect
+  connect.onComplete{
+    case Failure(f) => log(s"connect fail - $f", -10)
+    case Success(s) => log(s"connect success - $s", -10)
+  }
+
+  val sr = connect.map(s => (s, s.startReading))
+
+  val jproto = sr.map { x => log("hi strat reading"); new JProtocol(x._1, x._2) }
 
   def get(penName: String) = {
-    log(s"penNameReady - ${penName}" ,10)
+//    log(s"penNameReady - ${penName}" ,10)
 
     jproto.flatMap { s =>
-      log(s"penName - ${penName}" ,10)
+//      log(s"penName - ${penName}" ,10)
       val rsp = s.sendWithResult[OverviewRsp, OverviewReq](OverviewReq(penName, penName), Some(x => x.takeWhile(_.result.nonEmpty)))
       toFuture(rsp)
     }
@@ -129,12 +138,14 @@ object InitBugClient extends App {
 //    justSend(s"ha${i}")
   }
 
-  Thread.sleep(10000)
-  log(s"begin send2  =============", -15)
-  for(i <- 1 to 1000) {
-    get(s"ha${i}")
-//    justSend(s"ha${i}")
-  }
+//  Thread.sleep(10000)
+//
+//
+//  log(s"begin send2  =============", -15)
+//  for(i <- 1 to 1000) {
+//    get(s"ha${i}")
+////    justSend(s"ha${i}")
+//  }
 
   Thread.currentThread().join()
 }

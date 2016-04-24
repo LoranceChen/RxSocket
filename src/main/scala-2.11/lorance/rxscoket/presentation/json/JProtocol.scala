@@ -42,17 +42,13 @@ class JProtocol(connectedSocket: ConnectedSocket, read: Observable[Vector[Comple
     * @return
     */
   def sendWithResult[Result <: IdentityTask, Req <: IdentityTask]
-  (any: Req, additional: Option[Observable[Result] => Observable[Result]])
-  (implicit mf: Manifest[Result]) = {
-    /**
-      * Q: when gc deal with those temp observable?
-      * A: Yes, because we use whileOpt parameter and timeout limit.It will become non-refer.
-      * return: Observable[T]
-      */
+    (any: Req, additional: Option[Observable[Result] => Observable[Result]])
+    (implicit mf: Manifest[Result]) = {
+
     def taskResult[T <: IdentityTask](taskId: String)
                                      (implicit mf: Manifest[T]) = {
       jRead.map { jsonProto =>
-        log(s"any JProtocol taskId - $taskId - $jsonProto - class - ${this}", 200)
+        log(s"any JProtocol taskId - $taskId - $jsonProto - class - ${this}")
         jsonProto \ "taskId" match {
           case JString(task) if task == taskId =>
             log(s"specify JProtocol taskId - $taskId, loaded - $jsonProto")
@@ -68,8 +64,8 @@ class JProtocol(connectedSocket: ConnectedSocket, read: Observable[Vector[Comple
             None
         }
       }.filter(_.isDefined).map(_.get).
-        timeout(Duration(presentation.TIMEOUT, TimeUnit.SECONDS)).
-        doOnError { e => log(s"[Throw] to JProtocol Obv - $taskId - $e", 1) }
+        timeout(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS)).
+        doOnError { e => log(s"[Throw] JProtocol.taskResult - $taskId - $e", 1) }
     }
 
     val x = taskResult[Result](any.taskId)

@@ -2,6 +2,8 @@ package lorance.rxscoket.session
 
 import java.nio.ByteBuffer
 
+import scala.concurrent.Future
+
 /**
   * most of them is decode and encode.
   * All of them use Big-Endian for unification
@@ -16,4 +18,5 @@ package object implicitpkg {
     */
   implicit def StringToByteBuffer(string: String): ByteBuffer = ByteBufferEx.stringToByteBuffer(string)
   implicit def StringToByteArray(string: String): Array[Byte] = ByteBufferEx.stringToByteArray(string)
+  implicit def FutureAppendTime[T](future: Future[T]): FutureEx[T] = new FutureEx(future)
 }

@@ -21,7 +21,7 @@ class ServerEntrance(host: String, port: Int) {
     val server = AsynchronousServerSocketChannel.open
     val socketAddress: InetSocketAddress = new InetSocketAddress(host, port)
     val prepared = server.bind(socketAddress)
-    log(s"Server is listening at - $socketAddress")
+    log(s"Server is prepare listen at - $socketAddress")
     prepared
   }
 
