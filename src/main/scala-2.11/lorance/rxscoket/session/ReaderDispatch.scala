@@ -80,7 +80,7 @@ class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Config
         val newAf = new Array[Byte](length)
         src.get(newAf, 0, length)
         val completed = CompletedProto(paddingProto.uuidOpt.get, length, ByteBuffer.wrap(newAf))
-        log(s"${this.getClass.toString} : get protocol - ${(completed.uuid, completed.length, new String(completed.loaded.array))}", -12)
+        log(s"${this.getClass.toString} : get protocol - ${(completed.uuid, completed.length, new String(completed.loaded.array))}", 85)
         Some(completed)
       }
     }
@@ -104,7 +104,7 @@ class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Config
               val newAf = new Array[Byte](length)
               src.get(newAf, 0, length)
               val completed = CompletedProto(uuidOpt.get, length, ByteBuffer.wrap(newAf))
-              log(s"${this.getClass.toString} : get protocol - ${(completed.uuid, completed.length, new String(completed.loaded.array))}", -12)
+              log(s"${this.getClass.toString} : get protocol - ${(completed.uuid, completed.length, new String(completed.loaded.array))}", 85)
               Some(completed)
             }
           case PendingLength(arrived, number) =>
@@ -161,7 +161,7 @@ class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Config
           src.get(newAf, 0, needLength)
 
           val completed = CompletedProto(uuid, length, padding.put(newAf))
-          log(s"${this.getClass.toString} : get protocol - ${(completed.uuid, completed.length, new String(completed.loaded.array))}", -12)
+          log(s"${this.getClass.toString} : get protocol - ${(completed.uuid, completed.length, new String(completed.loaded.array))}", 85)
           Some(completed)
         }
         protoOpt match {

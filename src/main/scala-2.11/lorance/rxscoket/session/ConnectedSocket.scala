@@ -52,9 +52,9 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
           }
         case Success(c) =>
           val src = c.byteBuffer
-          log(s"read success - ${src.position} bytes", 50)
+          log(s"${src.position} bytes", 50, Some("read success"))
           readerDispatch.receive(src).foreach{protos =>
-            log(s"dispatched protos - ${protos.map(p => p.loaded.array().string)}",3)
+            log(s"dispatched protos - ${protos.map(p => p.loaded.array().string)}", 70)
             for (s <- readSubscribes) {s.onNext(protos)}}
           beginReadingClosure
       }
@@ -71,10 +71,10 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
     val p = Promise[Unit]
     this.synchronized {
 
-      log(s"ConnectedSocket send - ${session.deCode(data.array())}", 50)
+      log(s"ConnectedSocket send - ${session.deCode(data.array())}", 70)
       socketChannel.write(data, 1, new CompletionHandler[Integer, Int] {
         override def completed(result: Integer, attachment: Int): Unit = {
-          log(s"send completed result - $result", 50)
+          log(s"result - $result", 50, Some("send completed"))
           p.trySuccess(Unit)
         }
 
