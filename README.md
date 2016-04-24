@@ -28,7 +28,7 @@ ForkJoinPool-1-worker-13: second subscriber get protocol - hello server!
 ForkJoinPool-1-worker-13: second subscriber get protocol - 北京,你好!
 ```  
 
-####JProtocol Performance test
+####JProtocol Example and Performance test
 #####Server side
 ```
 import lorance.rxscoket._
