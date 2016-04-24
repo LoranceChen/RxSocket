@@ -1,11 +1,11 @@
 name := "RxSocket"
 
-version := "0.8.1-SNAPSHOT"
+version := "0.9.0-SNAPSHOT"
 
 scalaVersion := "2.11.7"
 
 libraryDependencies ++= Seq(
-  "io.reactivex" %% "rxscala" % "0.26.0",
+  "io.reactivex" %% "rxscala" % "0.26.1",
   "net.liftweb" %% "lift-json" % "3.0-M8"
 )
 

@@ -6,7 +6,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
 import lorance.rxscoket.session._
 import lorance.rxscoket._
-
+//import lorance.rxscoket.session.execution.currentThread
 /**
   * socket.write is NOT support concurrent - it has fixed by sync lock
   */

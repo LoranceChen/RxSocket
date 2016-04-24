@@ -8,13 +8,13 @@ object Configration {
   /**
     * class TempBuffer's limit field
     */
-  var READBUFFER_LIMIT = 256
+  var READBUFFER_LIMIT = 25
 
   /**
     * todo
     * class TempBuffer's limit field
     */
-  var TEMPBUFFER_LIMIT = 1024 * 8 //byte
+  var TEMPBUFFER_LIMIT = 100 //byte
 
   /**
     * todo

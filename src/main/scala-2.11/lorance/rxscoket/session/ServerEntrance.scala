@@ -10,6 +10,7 @@ import scala.concurrent.{Promise, Future}
 import scala.util.{Success, Failure}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.mutable
+//import lorance.rxscoket.session.execution.currentThread
 
 class ServerEntrance(host: String, port: Int) {
   private val connectionSubs = mutable.Set[Subscriber[ConnectedSocket]]()

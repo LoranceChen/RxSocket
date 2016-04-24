@@ -5,7 +5,7 @@ import lorance.rxscoket.session._
 import rx.lang.scala.Observable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.io.StdIn
-
+//import lorance.rxscoket.session.execution.currentThread
 
 object DemoClientMainTest extends App with DemoClientMain {
   inputLoop

@@ -12,5 +12,5 @@ package object presentation {
     id
   }
 
-  var TIMEOUT = 3 //seconds
+  var TIMEOUT = 15 //seconds
 }

@@ -12,4 +12,11 @@ package object session {
     val bytes = protoGroup +: length
     bytes ++ msgBytes
   }
+
+  def deCode(bytePtoro: Array[Byte]) = {
+    val uuid = bytePtoro(0)
+    val length = Array(bytePtoro(1),bytePtoro(2),bytePtoro(3),bytePtoro(4)).toInt
+    val load = bytePtoro.drop(5).string
+    (uuid, length, load)
+  }
 }

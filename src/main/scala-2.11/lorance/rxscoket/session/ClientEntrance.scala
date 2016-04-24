@@ -18,7 +18,7 @@ class ClientEntrance(remoteHost: String, remotePort: Int) {
     val p = Promise[ConnectedSocket]
     channel.connect(serverAddr, channel, new CompletionHandler[Void, AsynchronousSocketChannel]{
       override def completed(result: Void, attachment: AsynchronousSocketChannel): Unit = {
-        log(s"linked to server success")
+        log(s"linked to server success", -10)
         p.trySuccess(new ConnectedSocket(attachment))
       }
 

@@ -9,14 +9,31 @@ import lorance.rxscoket.session.implicitpkg._
 import net.liftweb.json.JsonAST.JValue
 import net.liftweb.json.JsonParser.ParseException
 import rx.lang.scala.Observable
+import rx.lang.scala.schedulers.ExecutionContextScheduler
 
+import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration.Duration
 import net.liftweb.json._
 
 /**
   * create a JProtocol to dispatch all json relate info bind with socket and it's read stream
   */
-class JProtocol(connectedSocket: ConnectedSocket, val read: Observable[Vector[CompletedProto]]) {
+class JProtocol(connectedSocket: ConnectedSocket, read: Observable[Vector[CompletedProto]]) {
+  val jRead = read.flatMap { cps =>
+    val jsonProto = cps.filter(_.uuid == 1.toByte)
+    val x = Observable.from(
+      jsonProto.map{cp =>
+//        log("jread - ", -20)
+        parseOpt(cp.loaded.array.string)}.
+        filter(_.nonEmpty).
+        map(_.get)
+//        map{x =>
+//          (x.get, try{Some((x.get \ "taskId").values.asInstanceOf[String] )} catch {case e : Throwable => None})}
+    )//.observeOn(ExecutionContextScheduler(global))//.onBackpressureBuffer//.publish
+//    x.connect
+    x
+  }
+
   def send(any: Any) = {
     val bytes = JsonParse.enCode(any)
     connectedSocket.send(ByteBuffer.wrap(bytes))
@@ -34,39 +51,40 @@ class JProtocol(connectedSocket: ConnectedSocket, val read: Observable[Vector[Co
     * @return
     */
   def sendWithResult[Result <: IdentityTask, Req <: IdentityTask]
-                    (any: Req, additional: Option[Observable[Result] => Observable[Result]])
-                    (implicit mf: Manifest[Result]) = {
-    val bytes = JsonParse.enCode(any)
+  (any: Req, additional: Option[Observable[Result] => Observable[Result]])
+  (implicit mf: Manifest[Result]) = {
+    /**
+      * Q: when gc deal with those temp observable?
+      * A: Yes, because we use whileOpt parameter and timeout limit.It will become non-refer.
+      * return: Observable[T]
+      */
+    def taskResult[T <: IdentityTask](taskId: String)
+                                      //additional: Option[Observable[T] => Observable[T]])
+                                     (implicit mf: Manifest[T]) = {
+//      log(s"enter `taskResult` - $taskId", -15)
 
-    //prepare stream before send msg
-    val o = taskResult[Result](any.taskId, additional)
-    connectedSocket.send(ByteBuffer.wrap(bytes))
-    o
-  }
+      //todo publish could save for multi execute map body.
+      val pub = jRead.map { jsonProto =>
+        log(s"any JProtocol taskId - $taskId - $jsonProto - class - ${this}", 80)
 
-  /**
-    * Q: when gc deal with those temp observable?
-    * A: Yes, because we use whileOpt parameter and timeout limit.It will become non-refer.
-    * return: Observable[T]
-    */
-  private def taskResult[T <: IdentityTask](taskId: String,
-                                            additional: Option[Observable[T] => Observable[T]])
-                                           (implicit mf: Manifest[T]): Observable[T] = {
-    log(s"enter `taskResult` - $taskId", 15)
+//        jsonProto._2 match {
+//          case Some(`taskId`) =>
+//            log(s"specify JProtocol taskId - $taskId, loaded - $jsonProto",-10 )
+//            try {
+//              Some(JsonParse.deCode[T](jsonProto._1))
+//            } catch {
+//              case e: MappingException =>
+//                log(s"find taskId but can't extract it, $jsonProto, to class - ${mf.runtimeClass}", 3)
+//                None
+//            }
+//          case _ =>
+//            log(s"other JProtocol taskId - $taskId, loaded - $jsonProto")
+//            None
+//        }
 
-    def jsonLoadOpt(proto: CompletedProto) = if (proto.uuid == 1.toByte) {
-      try{
-        Some(parse(proto.loaded.array().string))
-      } catch {
-        case e: ParseException => None
-      }
-    } else None
-
-    def tryParseToJson(proto: CompletedProto) = {
-      jsonLoadOpt(proto).flatMap { jsonProto =>
-        (jsonProto \ "taskId").values match {
-          case task: String if task == taskId =>
-            log(s"JProtocol taskId - $taskId, loaded - $jsonProto")
+        jsonProto \ "taskId" match {
+          case JString(task) if task == taskId =>
+            log(s"specify JProtocol taskId - $taskId, loaded - $jsonProto")
             try {
               Some(JsonParse.deCode[T](jsonProto))
             } catch {
@@ -74,18 +92,24 @@ class JProtocol(connectedSocket: ConnectedSocket, val read: Observable[Vector[Co
                 log(s"find taskId but can't extract it, $jsonProto, to class - ${mf.runtimeClass}", 3)
                 None
             }
-          case _ => None
+          case _ =>
+            log(s"other JProtocol taskId - $taskId, loaded - $jsonProto")
+            None
         }
-      }
+      }//.onBackpressureBuffer
+//      pub.connect
+      pub.filter(_.isDefined).map(_.get).
+        timeout(Duration(presentation.TIMEOUT, TimeUnit.SECONDS)).
+        doOnError { e => log(s"throw to JProtocol Obv - $taskId - $e", -17) }
     }
 
-    val theTaskEvent = read.flatMap(s => Observable.from(s)).
-      map(tryParseToJson).
-      filter(x => x.nonEmpty).
-      map(_.get).
-      timeout(Duration(presentation.TIMEOUT, TimeUnit.SECONDS))
+    val x = taskResult[Result](any.taskId)
+    val finalObv = additional.map(_(x)).getOrElse(x)
 
-    if(additional.isEmpty) theTaskEvent
-    else additional.get(theTaskEvent)
+    //send msg after prepare stream
+    val bytes = JsonParse.enCode(any)
+    connectedSocket.send(ByteBuffer.wrap(bytes))
+
+    finalObv
   }
 }

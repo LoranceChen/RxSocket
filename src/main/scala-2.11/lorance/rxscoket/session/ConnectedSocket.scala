@@ -6,13 +6,14 @@ import java.nio.channels.{CompletionHandler, AsynchronousSocketChannel}
 import lorance.rxscoket.session.exception.ReadResultNegativeException
 import lorance.rxscoket._
 import lorance.rxscoket.session.implicitpkg._
+import rx.lang.scala.schedulers.ExecutionContextScheduler
 import rx.lang.scala.{Subscription, Subscriber, Observable}
 
 import scala.collection.mutable
 import scala.concurrent.{Future, Promise}
 import scala.util.{Success, Failure}
 import scala.concurrent.ExecutionContext.Implicits.global
-
+//import lorance.rxscoket.session.execution.currentThread
 class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
   private val readerDispatch = new ReaderDispatch()
   private val readSubscribes = mutable.Set[Subscriber[Vector[CompletedProto]]]()
@@ -22,15 +23,19 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
 
   def disconnect(): Unit = socketChannel.close()
 
-  lazy val startReading: Observable[Vector[CompletedProto]] = {
+  val startReading: Observable[Vector[CompletedProto]] = {
     log(s"beginReading - ", 1)
     beginReading
-    Observable.apply[Vector[CompletedProto]]({ s =>
+    val x = Observable.apply[Vector[CompletedProto]]({ s =>
       append(s)
       s.add(Subscription(remove(s)))
-    }).doOnCompleted {
+    })//.publish
+
+    val y = x.onBackpressureBuffer.observeOn(ExecutionContextScheduler(global)).doOnCompleted {
       log("socket read - doOnCompleted")
     }
+//    x.connect
+    y
   }
 
   private def beginReading = {
@@ -49,7 +54,7 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
           }
         case Success(c) =>
           val src = c.byteBuffer
-          log(s"read success - ${src.position} bytes", 2)
+          log(s"read success - ${src.position} bytes", 50)
           readerDispatch.receive(src).foreach{protos =>
             log(s"dispatched protos - ${protos.map(p => p.loaded.array().string)}",3)
             for (s <- readSubscribes) {s.onNext(protos)}}
@@ -67,9 +72,11 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
   def send(data: ByteBuffer) = {
     val p = Promise[Unit]
     this.synchronized {
+
+      log(s"ConnectedSocket send - ${session.deCode(data.array())}", 20)
       socketChannel.write(data, 1, new CompletionHandler[Integer, Int] {
         override def completed(result: Integer, attachment: Int): Unit = {
-          log(s"send completed result - $result")
+          log(s"send completed result - $result", 20)
           p.trySuccess(Unit)
         }
 
@@ -87,6 +94,7 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
     val callback = new CompletionHandler[Integer, Attachment] {
       override def completed(result: Integer, attach: Attachment): Unit = {
         if (result != -1) {
+          log(s"read completed - $result", 80)
           p.trySuccess(attach)
         } else {
           disconnect()
