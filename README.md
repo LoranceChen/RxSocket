@@ -132,7 +132,10 @@ time cost with 1000 times simple call:
 begin with - 1461494820230 timestamp  
 end with - 1461494821000 timestamp  
 every with result request spend <1 ms in local
-
+#####Some Problem NOTIC please
+If a lot of protocol wait result, it means, many `JProtocol.sendWithResult` wait result will encounter serious performance problem. It occurred beacause every wait result need observale network data source, in other words, if a data received, a event will tell every map/flatmap/subscriber. Straight see, it just O(n), litter no effective, but if we consider time line factor it was O(n*n).
+**how to solve:** Maintain observable less then 1000. Further more, less use `JProtocol.sendWithResult` method expecially in server side because server means it will deal with many request.
+**final decide:** use message queue replace pure Rx
 ####UPDATE  
 1. catch disconnected exception
 2. add loop send msg simulate
@@ -156,7 +159,7 @@ v0.9.0
 * add concurrent dispatch `CompleteProto`
 
 ####Roadmap
+* **urgent** need read Queue and write Queue - ensure same request thread i/o socket with FIFO
 * adds useful observable on special event
 * handle reconnect and relative notification
-* need read Queue and write Queue - ensure same request thread i/o socket with FIFO
 * log method add class path: replace Int log level by readable words. Related by package, class and importance.
