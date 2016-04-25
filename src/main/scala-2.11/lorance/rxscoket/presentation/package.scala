@@ -12,5 +12,5 @@ package object presentation {
     id
   }
 
-  var JPROTO_TIMEOUT = 7 //seconds
+  var JPROTO_TIMEOUT = 17 //seconds
 }

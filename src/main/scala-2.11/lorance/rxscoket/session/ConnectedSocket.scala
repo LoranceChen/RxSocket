@@ -3,11 +3,12 @@ package lorance.rxscoket.session
 import java.nio.ByteBuffer
 import java.nio.channels.{CompletionHandler, AsynchronousSocketChannel}
 
+import lorance.rxscoket.presentation.json.IdentityTask
 import lorance.rxscoket.session.exception.ReadResultNegativeException
 import lorance.rxscoket._
 import lorance.rxscoket.session.implicitpkg._
 import rx.lang.scala.schedulers.ExecutionContextScheduler
-import rx.lang.scala.{Subscription, Subscriber, Observable}
+import rx.lang.scala.{Subject, Subscription, Subscriber, Observable}
 
 import scala.collection.mutable
 import scala.concurrent.{Future, Promise}
@@ -92,7 +93,7 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
     val callback = new CompletionHandler[Integer, Attachment] {
       override def completed(result: Integer, attach: Attachment): Unit = {
         if (result != -1) {
-          log(s"read completed - $result", 80)
+          log(s"$result", 80, Some("read completed"))
           p.trySuccess(attach)
         } else {
           disconnect()

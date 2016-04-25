@@ -28,8 +28,8 @@ object JProtoClient extends App {
   case class OverviewRsp(result: Option[OverviewContent], taskId: String) extends IdentityTask
   case class OverviewContent(id: String)
 
-  logLevel = 1
-
+  logLevel = -15
+//  logAim ++= List("get protocol")//, "send completed")
   val client = new ClientEntrance("localhost", 10011)
   val connect = client.connect
   connect.onComplete{
@@ -39,7 +39,7 @@ object JProtoClient extends App {
 
   val sr = connect.map(s => (s, s.startReading))
 
-  val jproto = sr.map { x => log("hi strat reading"); new JProtocol(x._1, x._2) }
+  val jproto = sr.map { x => log("hi strat reading"); val x1= new JProtocol(x._1, x._2) ; x1.jRead.subscribe{x1 => log("aaaa", 100)}; x1}
 
   def get(name: String) = {
     jproto.flatMap { s =>
@@ -48,17 +48,26 @@ object JProtoClient extends App {
     }
   }
 
+  def justSend(penName: String) = {
+    jproto.flatMap { s =>
+      s.send(OverviewReq(penName, penName))
+    }
+  }
+
   log(s"begin send 1000 times for make jvm hot =============", -15)
-  for(i <- 1 to 1000) {
+  for(i <- 1 to 3000) {
     get(s"ha${i}")
+//    justSend(s"ha${i}")
   }
 
-  Thread.sleep(10000)
-
+  Thread.sleep(7000)
+//  get(s"ha${20}")
   log(s"begin send 1000 times  =============", -15)
-  for(i <- 1 to 1000) {
+  for(i <- 1 to 16000) {
     get(s"ha${i}")
+//    justSend(s"ha${i}")
   }
+//  get(s"ha${20}")
 
   Thread.currentThread().join()
 }
