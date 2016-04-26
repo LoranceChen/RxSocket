@@ -119,7 +119,7 @@ object JProtoClient extends App {
   Thread.sleep(10000)
 
   log(s"begin send 1000 times  =============", -15)
-  for(i <- 1 to 1000) {
+  for(i <- 1001 to 2000) {
     get(s"ha${i}")
   }
 
@@ -133,9 +133,11 @@ begin with - 1461494820230 timestamp
 end with - 1461494821000 timestamp  
 every with result request spend <1 ms in local
 #####Some Problem NOTIC please
-If a lot of protocol wait result, it means, many `JProtocol.sendWithResult` wait result will encounter serious performance problem. It occurred beacause every wait result need observale network data source, in other words, if a data received, a event will tell every map/flatmap/subscriber. Straight see, it just O(n), litter no effective, but if we consider time line factor it was O(n*n).
+If a lot of protocol wait result, it means, many `JProtocol.sendWithResult` wait result will encounter serious performance problem. It occurred beacause every wait result need observale network data source, in other words, if a data received, a event will tell every map/flatmap/subscriber. Straight see, it just O(n), litter no effective, but if we consider time line factor it was O(n*n).  
 **how to solve:** Maintain observable less then 1000. Further more, less use `JProtocol.sendWithResult` method expecially in server side because server means it will deal with many request.
 **final decide:** use message queue replace pure Rx
+every with result request spend ≈1 ms in local.Exactly, it was 0.5 to 2 ms.
+
 ####UPDATE  
 1. catch disconnected exception
 2. add loop send msg simulate
@@ -149,7 +151,7 @@ If a lot of protocol wait result, it means, many `JProtocol.sendWithResult` wait
 
 v0.7.1 - 0.7.3
 * adds json presentation extractor error log
-* keep temp json task observable form leak. (Does it works?)
+* keep temp json task observable form leak.(can i call it will lead a gpu leak?)
 
 v0.8.1
 * fix bug: json presentation `sendWithResult` method NOT filter specify taskId.
@@ -158,8 +160,13 @@ v0.9.0
 * fix bug: `ReaderDispatch` can't works in some situation...(so sorry)
 * add concurrent dispatch `CompleteProto`
 
+####Notice
+JProtocol presentation only support < 1000 subscriber on JPROTO_TIMEOUT setting time.
+1000 count subscriber 
 ####Roadmap
 * **urgent** need read Queue and write Queue - ensure same request thread i/o socket with FIFO
 * adds useful observable on special event
 * handle reconnect and relative notification
+* need read Queue and write Queue - ensure same request thread i/o socket with FIFO
+* 创建一个消息队列,接受的消息数不能超过该队列,否则停止执行read操作.起到限制网络流量的作用
 * log method add class path: replace Int log level by readable words. Related by package, class and importance.
