@@ -18,4 +18,14 @@ package object execution {
     val e = ExecutionContext.fromExecutor(currentExe)
     e
   }
+
+  def singleExecutionContent = new ExecutionContext {
+    val threadPool = Executors.newFixedThreadPool(1)
+
+    def execute(runnable: Runnable) {
+      threadPool.submit(runnable)
+    }
+
+    def reportFailure(t: Throwable) {}
+  }
 }

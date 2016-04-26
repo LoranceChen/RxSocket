@@ -2,12 +2,12 @@ package jproto
 
 import lorance.rxscoket._
 import lorance.rxscoket.presentation.json.{IdentityTask, JProtocol}
-import lorance.rxscoket.session.ServerEntrance
+import lorance.rxscoket.session.{Configration, ServerEntrance}
 import net.liftweb.json.JsonAST.JObject
 
 object JProtoServer extends App {
   logLevel = -1000
-  val x = logAim ++= List[String]("read success", "send completed")
+  val x = logAim ++= List[String]("send completed")//"read success",
 
   val conntected = new ServerEntrance("127.0.0.1", 10011).listen
   val readX = conntected.map(c => (c, c.startReading))
@@ -16,6 +16,8 @@ object JProtoServer extends App {
 
   case class OverviewRsp(result: Option[OverviewContent], taskId: String) extends IdentityTask
   case class OverviewContent(id: String)
+
+  Configration.NET_MSG_OVERLOAD = 3
 
   readerJProt.subscribe ( s =>
     s.jRead.subscribe{ j =>

@@ -15,6 +15,7 @@ package object implicitpkg {
   implicit def exArrayBuffer(arrayByte: Array[Byte]): ArrayByteEx = new ArrayByteEx(arrayByte)
   /**
     * use Upper word at beginning make it as a dependence function
+    * how to find where does the implicit convert be used? It was very inconvenient to following.
     */
   implicit def StringToByteBuffer(string: String): ByteBuffer = ByteBufferEx.stringToByteBuffer(string)
   implicit def StringToByteArray(string: String): Array[Byte] = ByteBufferEx.stringToByteArray(string)

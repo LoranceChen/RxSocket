@@ -11,7 +11,6 @@ object Configration {
   var READBUFFER_LIMIT = 256
 
   /**
-    * todo
     * class TempBuffer's limit field
     */
   var TEMPBUFFER_LIMIT = 1024 * 10 //10k byte
@@ -30,4 +29,15 @@ object Configration {
   var PACKAGE_CONTEXT_LENGTH = Int.MaxValue
 
   var CONNECT_TIME_LIMIT = 7 // second
+
+  /**
+    * it's a big topic.
+    * finally, I think we can collect runtime protocol information to dynamic adjust the load value.
+    */
+  var NET_MSG_OVERLOAD = 10 // 1000
+
+  /**
+    * break of two receives
+    */
+  var NET_RATE = 1 //ms
 }

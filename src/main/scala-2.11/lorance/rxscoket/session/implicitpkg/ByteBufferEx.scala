@@ -41,7 +41,7 @@ class ByteBufferEx(byteBuffer: ByteBuffer) {
 
 object ByteBufferEx {
   /**
-    * String has a mehtod getBytes, for avoid mislead I put bytes transform put here and use the long name
+    * String has a method, getBytes, for avoid mislead I put bytes transform put here and use the long name
     */
   def stringToByteBuffer(src: String): ByteBuffer = {
     val result = stringToByteArray(src)
@@ -59,5 +59,4 @@ object ByteBufferEx {
     bytesLength(3) = (lengthData & 0xFF).toByte
     bytesLength ++ bytes
   }
-//  def copy
 }

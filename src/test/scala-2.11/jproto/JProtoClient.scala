@@ -10,13 +10,15 @@ import scala.util.{Success, Failure}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object JProtoClient extends App {
+  val count = new Count()
+
   private def toFuture(observable: Observable[OverviewRsp]): Future[List[OverviewRsp]] = {
     val p = Promise[List[OverviewRsp]]
     val lst = scala.collection.mutable.ListBuffer[OverviewRsp]()
     observable.subscribe(
       s => {
         lst.synchronized(lst.+=(s))
-        lorance.rxscoket.log("overview Rsp ready - " + lst.mkString("\n"), -16)
+        lorance.rxscoket.log(s"overview Rsp ready - ${count.add} " + lst.mkString("\n"), -16)
       },
       e => p.tryFailure(e),
       () => p.trySuccess(lst.toList)
@@ -39,7 +41,7 @@ object JProtoClient extends App {
 
   val sr = connect.map(s => (s, s.startReading))
 
-  val jproto = sr.map { x => log("hi strat reading"); val x1= new JProtocol(x._1, x._2) ; x1.jRead.subscribe{x1 => log("aaaa", 100)}; x1}
+  val jproto = sr.map { x => log("hi strat reading"); new JProtocol(x._1, x._2) }
 
   def get(name: String) = {
     jproto.flatMap { s =>
@@ -55,12 +57,12 @@ object JProtoClient extends App {
   }
 
   log(s"begin send 1000 times for make jvm hot =============", -15)
-  for(i <- 1 to 3000) {
+  for(i <- 1 to 1000) {
     get(s"ha${i}")
-//    justSend(s"ha${i}")
+    justSend(s"ha${i}")
   }
 
-  Thread.sleep(7000)
+//  Thread.sleep(7000)
 //  get(s"ha${20}")
   log(s"begin send 1000 times  =============", -15)
   for(i <- 1 to 16000) {

@@ -3,17 +3,17 @@ package lorance.rxscoket.session
 import java.nio.ByteBuffer
 import java.nio.channels.{CompletionHandler, AsynchronousSocketChannel}
 
-import lorance.rxscoket.presentation.json.IdentityTask
 import lorance.rxscoket.session.exception.ReadResultNegativeException
 import lorance.rxscoket._
 import lorance.rxscoket.session.implicitpkg._
 import rx.lang.scala.schedulers.ExecutionContextScheduler
-import rx.lang.scala.{Subject, Subscription, Subscriber, Observable}
+import rx.lang.scala.{Subscription, Subscriber, Observable}
 
 import scala.collection.mutable
 import scala.concurrent.{Future, Promise}
 import scala.util.{Success, Failure}
 import scala.concurrent.ExecutionContext.Implicits.global
+import lorance.rxscoket.session.execution.singleExecutionContent
 //import lorance.rxscoket.session.execution.currentThread
 
 class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
@@ -22,6 +22,16 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
 
   private def append(s: Subscriber[Vector[CompletedProto]]) = readSubscribes.synchronized(readSubscribes += s)
   private def remove(s: Subscriber[Vector[CompletedProto]]) = readSubscribes.synchronized(readSubscribes -= s)
+
+  val netMsgCountBuf = new Count()
+
+  val readAttach = Attachment(ByteBuffer.allocate(Configration.READBUFFER_LIMIT), socketChannel)
+
+  //val readLocker = new AnyRef
+
+  val readSingleThread = singleExecutionContent
+
+  //def continueRead(): Unit = readLocker.notify()
 
   def disconnect(): Unit = socketChannel.close()
 
@@ -38,10 +48,8 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
   }
 
   private def beginReading = {
-    val readAttach = Attachment(ByteBuffer.allocate(Configration.READBUFFER_LIMIT), socketChannel)
-
     def beginReadingClosure: Unit = {
-      read(readAttach) onComplete {
+      read(readAttach).onComplete{
         case Failure(f) =>
           f match {
             case e: ReadResultNegativeException =>
@@ -56,9 +64,22 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
           log(s"${src.position} bytes", 50, Some("read success"))
           readerDispatch.receive(src).foreach{protos =>
             log(s"dispatched protos - ${protos.map(p => p.loaded.array().string)}", 70)
-            for (s <- readSubscribes) {s.onNext(protos)}}
+            netMsgCountBuf.add(protos.map(_.loaded.capacity).sum)
+//            log(s"CompletedPtoro buffered count - ${netMsgCountBuf.get}", -1000)
+            for (s <- readSubscribes) s.onNext(protos)
+          }
+
+          //limit read operation
+//          if(netMsgCountBuf.get >= Configration.NET_MSG_OVERLOAD) {
+//            log(s"hold read operation - ")
+//            readLocker.wait()
+//            beginReadingClosure
+//          } else {
+          log(s"receive sleeping - ", -100)
+//          Thread.sleep(Configration.NET_RATE)
           beginReadingClosure
-      }
+//          }
+      }(readSingleThread)
     }
     beginReadingClosure
   }
@@ -71,11 +92,10 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
   def send(data: ByteBuffer) = {
     val p = Promise[Unit]
     this.synchronized {
-
       log(s"ConnectedSocket send - ${session.deCode(data.array())}", 70)
       socketChannel.write(data, 1, new CompletionHandler[Integer, Int] {
         override def completed(result: Integer, attachment: Int): Unit = {
-          log(s"result - $result", 50, Some("send completed"))
+          log(s"result - $result - count - ${netMsgCountBuf.get}", 50, Some("send completed"))
           p.trySuccess(Unit)
         }
 
