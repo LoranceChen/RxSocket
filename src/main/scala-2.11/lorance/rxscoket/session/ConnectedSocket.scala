@@ -22,7 +22,7 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
   private def append(s: Subscriber[Vector[CompletedProto]]) = readSubscribes.synchronized(readSubscribes += s)
   private def remove(s: Subscriber[Vector[CompletedProto]]) = readSubscribes.synchronized(readSubscribes -= s)
 
-  val netMsgCountBuf = new Count()
+//  val netMsgCountBuf = new Count()
 
   val readAttach = Attachment(ByteBuffer.allocate(Configration.READBUFFER_LIMIT), socketChannel)
 
@@ -57,7 +57,7 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
           log(s"${src.position} bytes", 50, Some("read success"))
           readerDispatch.receive(src).foreach{protos =>
             log(s"dispatched protos - ${protos.map(p => p.loaded.array().string)}", 70, Some("dispatch-protos"))
-            netMsgCountBuf.add(protos.map(_.loaded.capacity).sum)
+//            netMsgCountBuf.add(protos.map(_.loaded.capacity).sum)
             for (s <- readSubscribes) s.onNext(protos)
           }
           beginReadingClosure()

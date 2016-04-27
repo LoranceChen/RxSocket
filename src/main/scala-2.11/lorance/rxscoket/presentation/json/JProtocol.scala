@@ -20,14 +20,17 @@ class JProtocol(connectedSocket: ConnectedSocket, read: Observable[Vector[Comple
   private val tasks = mutable.HashMap[String, Subject[JValue]]()
   def addTask(taskId: String, taskStream: Subject[JValue]) = tasks.synchronized(tasks.+=(taskId -> taskStream))
   def removeTask(taskId: String) = tasks.synchronized(tasks.-=(taskId))
-  def getTask(taskId: String) = tasks(taskId)
+  def getTask(taskId: String) = tasks.get(taskId)
 
   val jRead = {
     val j_read = read.flatMap { cps =>
       val jsonProto = cps.filter(_.uuid == 1.toByte)
       Observable.from(
         jsonProto.map{cp =>
-          parseOpt(cp.loaded.array.string)}.
+          val load = cp.loaded.array.string
+          log(s"$load", 46, Some("proto-json"))
+          parseOpt(load)
+        }.
           filter(_.nonEmpty).
           map(_.get)
       )
@@ -37,7 +40,11 @@ class JProtocol(connectedSocket: ConnectedSocket, read: Observable[Vector[Comple
       try{
         val taskId = (j \ "taskId").values.asInstanceOf[String]
         val subj = this.getTask(taskId)
-        subj.onNext(j)
+        subj.foreach{
+          log(s"${compactRender(j)}", 18, Some("taskId-onNext"))
+          _.onNext(j)
+        }
+        log(s"${compactRender(j)}", 78, Some("task-json"))
       } catch {
         case e : Throwable => Unit
       }
@@ -74,7 +81,7 @@ class JProtocol(connectedSocket: ConnectedSocket, read: Observable[Vector[Comple
       doOnError { e => log(s"[Throw] JProtocol.taskResult - ${any.taskId} - $e") }.
       doOnCompleted{
         this.removeTask(any.taskId)
-        connectedSocket.netMsgCountBuf.dec
+//        connectedSocket.netMsgCountBuf.dec
       }
 
     //send msg after prepare stream
