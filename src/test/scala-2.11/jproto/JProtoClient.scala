@@ -65,7 +65,7 @@ object JProtoClient extends App {
   Thread.sleep(7000)
 
   log(s"begin send 30000 times  =============", -15)
-  for(i <- 1 to 300000) {
+  for(i <- 1 to 30000) {
     get(s"ha${i}")
 //    justSend(s"ha${i}")
   }

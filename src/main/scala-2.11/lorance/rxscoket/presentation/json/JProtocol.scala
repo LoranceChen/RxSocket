@@ -18,8 +18,6 @@ import net.liftweb.json._
 class JProtocol(connectedSocket: ConnectedSocket, read: Observable[Vector[CompletedProto]]) {
 
   private val tasks = mutable.HashMap[String, Subject[JValue]]()
-//  private val tasks = mutable.HashMap[String, Subject[_ <: IdentityTask]]()
-//  def addTask[T <: IdentityTask](taskId: String, taskStream: Subject[T], event: Tuple2[JValue , Subject[T]] => Unit) = tasks.synchronized(tasks.+=(taskId -> ((taskStream, event))))
   def addTask(taskId: String, taskStream: Subject[JValue]) = tasks.synchronized(tasks.+=(taskId -> taskStream))
   def removeTask(taskId: String) = tasks.synchronized(tasks.-=(taskId))
   def getTask(taskId: String) = tasks(taskId)
@@ -27,19 +25,12 @@ class JProtocol(connectedSocket: ConnectedSocket, read: Observable[Vector[Comple
   val jRead = {
     val j_read = read.flatMap { cps =>
       val jsonProto = cps.filter(_.uuid == 1.toByte)
-      val p = Observable.from(
+      Observable.from(
         jsonProto.map{cp =>
-          //        log("jread - ", -20)
-          //        if (tasks.size > high) high = tasks.size
-          //        log("count - " + high.toString, -30)
-          //        log("count - " + tasks.size, -30)
-
           parseOpt(cp.loaded.array.string)}.
           filter(_.nonEmpty).
           map(_.get)
-      )//.publish //todo why publish - connect will make server's subsriber doesn't work?
-      //    p.connect
-      p
+      )
     }
 
     j_read.subscribe{j =>
