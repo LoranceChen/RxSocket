@@ -71,7 +71,7 @@ class JProtocol(connectedSocket: ConnectedSocket, read: Observable[Vector[Comple
     val extract = register.map{s => s.extractOpt[Result]}.filter(_.isDefined).map(_.get)
     val resultStream = additional.map(_(extract)).getOrElse(extract).
       timeout(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS)).
-      doOnError { e => log(s"[Throw] JProtocol.taskResult - ${any.taskId} - $e", -101) }.
+      doOnError { e => log(s"[Throw] JProtocol.taskResult - ${any.taskId} - $e") }.
       doOnCompleted{
         this.removeTask(any.taskId)
         connectedSocket.netMsgCountBuf.dec
