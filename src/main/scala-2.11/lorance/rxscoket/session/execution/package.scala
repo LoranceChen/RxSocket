@@ -13,14 +13,18 @@ package object execution {
       r.run()
     }
   }
-  implicit val currentThread = {
+
+  /**
+    * todo to test does it could ensure in current thread
+    * @return
+    */
+  def currentThread = {
     val currentExe = new CurrentThreadExecutor
-    val e = ExecutionContext.fromExecutor(currentExe)
-    e
+    ExecutionContext.fromExecutor(currentExe)
   }
 
-  def singleExecutionContent = new ExecutionContext {
-    val threadPool = Executors.newFixedThreadPool(1)
+  def customExecutionContent(count: Int) = new ExecutionContext {
+    val threadPool = Executors.newWorkStealingPool(count)
 
     def execute(runnable: Runnable) {
       threadPool.submit(runnable)

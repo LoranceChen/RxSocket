@@ -16,24 +16,24 @@ package object rxscoket {
       println(s"${Thread.currentThread.getName}:${System.currentTimeMillis()} - ${aim.map(a => s"[$a] - ").getOrElse("")}$msg")
   }
 
-  class Count(){
-    private var sendCount = 0
+  class Count {
+    private var count = 0
     private val lock = new Object()
 
-    def get = sendCount
+    def get = count
 
     def add: Int = add(1)
 
     def add(count: Int): Int = {
-//      lock.synchronized{sendCount += count}
-      lock.synchronized{sendCount += 0}
-      sendCount
+      lock.synchronized{this.count += count}
+      this.count
     }
 
-    def dec = {
-//      lock.synchronized{sendCount-=1}
-      lock.synchronized{sendCount-=0}
-      sendCount
+    def dec: Int = dec(1)
+
+    def dec(count: Int) = {
+      lock.synchronized{this.count-=count}
+      this.count
     }
   }
 }

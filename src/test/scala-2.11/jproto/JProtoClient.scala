@@ -30,8 +30,8 @@ object JProtoClient extends App {
   case class OverviewRsp(result: Option[OverviewContent], taskId: String) extends IdentityTask
   case class OverviewContent(id: String)
 
-  logLevel = -15
-//  logAim ++= List("get protocol")//, "send completed")
+  logLevel = 1
+  logAim ++= List("send completed", "get protocol")//, "send completed")
   val client = new ClientEntrance("localhost", 10011)
   val connect = client.connect
   connect.onComplete{
@@ -57,19 +57,18 @@ object JProtoClient extends App {
   }
 
   log(s"begin send 1000 times for make jvm hot =============", -15)
-  for(i <- 1 to 1000) {
-    get(s"ha${i}")
-    justSend(s"ha${i}")
-  }
-
-//  Thread.sleep(7000)
-//  get(s"ha${20}")
-  log(s"begin send 1000 times  =============", -15)
-  for(i <- 1 to 16000) {
+  for(i <- -1000 to -1) {
     get(s"ha${i}")
 //    justSend(s"ha${i}")
   }
-//  get(s"ha${20}")
+
+  Thread.sleep(7000)
+
+  log(s"begin send 30000 times  =============", -15)
+  for(i <- 1 to 300000) {
+    get(s"ha${i}")
+//    justSend(s"ha${i}")
+  }
 
   Thread.currentThread().join()
 }
