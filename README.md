@@ -119,7 +119,7 @@ object JProtoClient extends App {
   Thread.sleep(10000)
 
   log(s"begin send 1000 times  =============", -15)
-  for(i <- 1001 to 2000) {
+  for(i <- 1001 to 20000) {
     get(s"ha${i}")
   }
 
@@ -127,16 +127,6 @@ object JProtoClient extends App {
 }
 
 ```
-#####Time cost on client request calling
-time cost with 1000 times simple call:  
-begin with - 1461494820230 timestamp  
-end with - 1461494821000 timestamp  
-every with result request spend <1 ms in local
-#####Some Problem NOTIC please
-If a lot of protocol wait result, it means, many `JProtocol.sendWithResult` wait result will encounter serious performance problem. It occurred beacause every wait result need observale network data source, in other words, if a data received, a event will tell every map/flatmap/subscriber. Straight see, it just O(n), litter no effective, but if we consider time line factor it was O(n^2).  
-**how to solve:** Maintain observable less then 1000. Further more, less use `JProtocol.sendWithResult` method expecially in server side because server means it will deal with many request.
-**final decide:** use message queue replace pure Rx
-every with result request spend ≈1 ms in local.Exactly, it was 0.5 to 2 ms.
 
 ####UPDATE  
 1. catch disconnected exception
@@ -160,15 +150,13 @@ v0.9.0
 * fix bug: `ReaderDispatch` can't works in some situation...(so sorry)
 * add concurrent dispatch `CompleteProto`
 
-####Notice
-JProtocol presentation only support < 1000 subscriber on JPROTO_TIMEOUT setting time.
-1000 count subscriber 
+v0.9.1
+* fix bug: `socket.write` operation NOT wait complete
+
 ####Roadmap
-* **urgent** need read Queue and write Queue - ensure same request thread i/o socket with FIFO
 * adds useful observable on special event
 * handle reconnect and relative notification
 * need read Queue and write Queue - ensure same request thread i/o socket with FIFO
-* 每个已连接的socket创建一个接受网络消息的队列,接受的消息数不能超过该队列,否则停止执行read操作.起到限制网络流量的作用.(考虑也建立一个发送消息的队列,显示消息的发送)
 * log method add class path: replace Int log level by readable words. Related by package, class and importance.
-* 为了避免负载过高导致需要结果的数据被屏蔽,需要将返回的数据通过另一个socket端口接受.
 * to solve head-of-line blocking with multi socket
+* add heart beat to test connect on works
