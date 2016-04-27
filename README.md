@@ -1,4 +1,4 @@
-# RxSocket - v0.9.0
+# RxSocket - v0.9.1
 socket with reactive style.
 
 ## Example
