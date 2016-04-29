@@ -1,6 +1,12 @@
 # RxSocket - v0.9.1
 socket with reactive style.
 
+## Why do this project?
+Reactive programming has important concept of stream.It's very ease to apply data similar task, furthermore, network 
+programming is designed as many layer for different data types. It's nature and useful if use Reactive Style to practice
+a network data stream.At upper of TCP, I will beginning to complete basic function of Session Layer and Json Presentation 
+Layer, it also allow anyone to redesign Presentation Layer easily.
+
 ## Example
 
 ### Client
@@ -160,3 +166,5 @@ v0.9.1
 * log method add class path: replace Int log level by readable words. Related by package, class and importance.
 * to solve head-of-line blocking with multi socket
 * add heart beat to test connect on works
+* encapsulate taskId because it must be unique.
+* add Model and Service concept to support specify Req an Rsp.
