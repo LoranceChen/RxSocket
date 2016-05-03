@@ -71,7 +71,7 @@ class JProtocol(connectedSocket: ConnectedSocket, read: Observable[Vector[Comple
     */
   def sendWithResult[Result <: IdentityTask, Req <: IdentityTask]
     (any: Req, additional: Option[Observable[Result] => Observable[Result]])
-    (implicit mf: Manifest[Result]) = {
+    (implicit mf: Manifest[Result]): Observable[Result] = {
     val register = Subject[JValue]()
     this.addTask(any.taskId, register)
 
@@ -90,4 +90,45 @@ class JProtocol(connectedSocket: ConnectedSocket, read: Observable[Vector[Comple
 
     resultStream
   }
+
+  /**
+    * auto attach taskId
+    *
+    * @tparam Result return json extractable class, should be case class
+    * @tparam Req should be case class
+    * @return
+    */
+  private def sendWithResult2[Result, Req](any: Req)
+  (implicit mf: Manifest[Result]): Observable[Result] = {
+    val register = Subject[JValue]()
+    val taskId = presentation.getTaskId
+    this.addTask(taskId, register)
+
+    case class ResultWithTaskId(result: Option[Result], taskId: String)
+    val extract = register.map{s => s.extractOpt[ResultWithTaskId]}.filter(_.isDefined).map(_.get)
+    val resultStream = extract.takeWhile(_.result.nonEmpty).map(_.result.get).
+      timeout(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS)).
+      doOnError { e => log(s"[Throw] JProtocol.taskResult - $any - $e") }.
+      doOnCompleted{
+        this.removeTask(taskId)
+      }
+
+    //send msg after prepare stream
+    val bytes = JsonParse.enCode(any)
+    connectedSocket.send(ByteBuffer.wrap(bytes))
+
+    resultStream
+  }
+
+//  private val serviceModel = mutable.HashMap[String, JValue => Unit]()
+//  def addService(taskId: String, taskStream: JValue => Unit) = serviceModel.synchronized(serviceModel.+=(taskId -> taskStream))
+//  def removeService(taskId: String) = serviceModel.synchronized(serviceModel.-=(taskId))
+//  def getService(taskId: String) = serviceModel.get(taskId)
+//
+//  /**
+//    * register service able to deal with `event` when receive.
+//    */
+//  def serviceAdd(model: String, event: JValue => Unit): Unit = {
+//    addService(model, event)
+//  }
 }
