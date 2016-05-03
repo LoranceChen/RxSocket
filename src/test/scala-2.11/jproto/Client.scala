@@ -49,7 +49,7 @@ object DemoClientMain extends App {
     while (true) {
       log(s"input message:")
       val lineJStr = StdIn.readLine()
-      val x2 = sendJProtocol.flatMap(l => l.sendWithResult[Rst, Req](Req("thread-time", lineJStr), Some(rst => rst.takeUntil(_.data.isEmpty))))//.publish
+      val x2 = sendJProtocol.flatMap(l => l.sendWithResult[Rst, Req](Req("thread-time", lineJStr), Some((rst: Observable[Rst]) => rst.takeUntil(_.data.isEmpty))))//.publish
 
       x2.subscribe(
         i => log(s"get result of the task - $i"),

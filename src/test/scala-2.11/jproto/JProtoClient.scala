@@ -45,7 +45,7 @@ object JProtoClient extends App {
 
   def get(name: String) = {
     jproto.flatMap { s =>
-      val rsp = s.sendWithResult[OverviewRsp, OverviewReq](OverviewReq(name, name), Some(x => x.takeWhile(_.result.nonEmpty)))
+      val rsp = s.sendWithResult[OverviewRsp, OverviewReq](OverviewReq(name, name), Some((x: Observable[OverviewRsp]) => x.takeWhile(_.result.nonEmpty)))
       toFuture(rsp)
     }
   }
@@ -69,6 +69,12 @@ object JProtoClient extends App {
     get(s"ha${i}")
 //    justSend(s"ha${i}")
   }
+//  var str = new StringBuilder()
+//  for( i <- 1 to 1024000) yield {
+//    str.append("1")
+//  }
+//
+//  get(str.toString)
 
   Thread.currentThread().join()
 }
