@@ -26,7 +26,7 @@ object DemoServerMain extends App {
   case class Req(taskId: String, req: String) extends IdentityTask
   case class Rst(taskId: String, data: Option[String]) extends IdentityTask
 
-  read.flatMap(x => x._2).subscribe(x => log(s"x - ${x.map(x => x.loaded.array().string)}"))
+  read.flatMap(x => x._2).subscribe(x => log(s"x - ${x.loaded.array().string}"))
 
   var seq = 1
   val x = read.map{ x =>

@@ -34,13 +34,12 @@ object DemoServerMain extends App {
 //    Observable.from(p.future).flatten
 //  }
 
-  read.subscribe{r => r._2.foreach{x =>
-      log(s"first subscriber get protocol - ${new String(x.loaded.array())}")
-      val msg = "hi client~"
-      r._1.send(ByteBuffer.wrap(session.enCode(0.toByte, msg)))
-    }
+  read.subscribe{r =>
+    log(s"first subscriber get protocol - ${new String(r._2.loaded.array())}")
+    val msg = "hi client~"
+    r._1.send(ByteBuffer.wrap(session.enCode(0.toByte, msg)))
   }
-  read.subscribe{r => r._2.foreach{x => log(s"second subscriber get protocol - ${new String(x.loaded.array())}")}}
+  read.subscribe{r => log(s"second subscriber get protocol - ${new String(r._2.loaded.array())}")}
 
   Thread.currentThread().join()
 }

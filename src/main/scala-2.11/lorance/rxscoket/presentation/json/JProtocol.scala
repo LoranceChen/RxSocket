@@ -15,7 +15,7 @@ import net.liftweb.json._
 /**
   * create a JProtocol to dispatch all json relate info bind with socket and it's read stream
   */
-class JProtocol(connectedSocket: ConnectedSocket, read: Observable[Vector[CompletedProto]]) {
+class JProtocol(connectedSocket: ConnectedSocket, read: Observable[CompletedProto]) {
 
   private val tasks = mutable.HashMap[String, Subject[JValue]]()
   def addTask(taskId: String, taskStream: Subject[JValue]) = tasks.synchronized(tasks.+=(taskId -> taskStream))
@@ -23,18 +23,13 @@ class JProtocol(connectedSocket: ConnectedSocket, read: Observable[Vector[Comple
   def getTask(taskId: String) = tasks.get(taskId)
 
   val jRead = {
-    val j_read = read.flatMap { cps =>
-      val jsonProto = cps.filter(_.uuid == 1.toByte)
-      Observable.from(
-        jsonProto.map{cp =>
+    val j_read = read.map{cp =>
+        if(cp.uuid == 1.toByte) {
           val load = cp.loaded.array.string
           log(s"$load", 46, Some("proto-json"))
           parseOpt(load)
-        }.
-          filter(_.nonEmpty).
-          map(_.get)
-      )
-    }
+        } else  None
+      }.filter(_.nonEmpty).map(_.get)
 
     j_read.subscribe{j =>
       try{

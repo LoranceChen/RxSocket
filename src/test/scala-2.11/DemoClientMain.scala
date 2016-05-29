@@ -19,12 +19,10 @@ trait DemoClientMain {
   val reading = Observable.from(socket).flatMap(_.startReading).publish
   reading.connect
 
-  reading.subscribe { protos =>
-    protos.map { proto =>
+  reading.subscribe { proto =>
       val context = new String(proto.loaded.array())
       log(s"get info - $context, uuid: ${proto.uuid}, length: ${proto.length}")
       context
-    }
   }
 
   socket.flatMap{s =>

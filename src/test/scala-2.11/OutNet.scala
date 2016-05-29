@@ -14,7 +14,7 @@ object OutNet extends App{
   }
 
   reader.subscribe{s =>
-    lorance.rxscoket.log(s"read - ${s._1.getRemoteAddress} - ${s._2.map(m => (m.uuid, m.length, new String(m.loaded.array)))}")
+    lorance.rxscoket.log(s"read - ${s._1.getRemoteAddress} - ${(s._2.uuid, s._2.length, new String(s._2.loaded.array))}")
   }
 
   Thread.currentThread().join()

@@ -17,10 +17,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
   private val readerDispatch = new ReaderDispatch()
-  private val readSubscribes = mutable.Set[Subscriber[Vector[CompletedProto]]]()
+  private val readSubscribes = mutable.Set[Subscriber[CompletedProto]]()
 
-  private def append(s: Subscriber[Vector[CompletedProto]]) = readSubscribes.synchronized(readSubscribes += s)
-  private def remove(s: Subscriber[Vector[CompletedProto]]) = readSubscribes.synchronized(readSubscribes -= s)
+  private def append(s: Subscriber[CompletedProto]) = readSubscribes.synchronized(readSubscribes += s)
+  private def remove(s: Subscriber[CompletedProto]) = readSubscribes.synchronized(readSubscribes -= s)
 
 //  val netMsgCountBuf = new Count()
 
@@ -28,10 +28,10 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
 
   def disconnect(): Unit = socketChannel.close()
 
-  val startReading: Observable[Vector[CompletedProto]] = {
+  val startReading: Observable[CompletedProto] = {
     log(s"beginReading - ", 1)
     beginReading()
-    Observable.apply[Vector[CompletedProto]]({ s =>
+    Observable.apply[CompletedProto]({ s =>
       append(s)
       s.add(Subscription(remove(s)))
     }).onBackpressureBuffer.
@@ -58,7 +58,8 @@ class ConnectedSocket(val socketChannel: AsynchronousSocketChannel) {
           readerDispatch.receive(src).foreach{protos =>
             log(s"dispatched protos - ${protos.map(p => p.loaded.array().string)}", 70, Some("dispatch-protos"))
 //            netMsgCountBuf.add(protos.map(_.loaded.capacity).sum)
-            for (s <- readSubscribes) s.onNext(protos)
+            for (s <- readSubscribes;
+                 item <- protos) s.onNext(item)
           }
           beginReadingClosure()
       }
