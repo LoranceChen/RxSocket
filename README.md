@@ -1,4 +1,4 @@
-# RxSocket - v0.9.1
+# RxSocket - v0.9.2
 socket with reactive style.
 
 ## Why do this project?
@@ -158,6 +158,9 @@ v0.9.0
 
 v0.9.1
 * fix bug: `socket.write` operation NOT wait complete
+
+v0.9.2
+* use java ConcurrentHashMap at `JProtocol.sendWithResult` avoid lock data frequency.
 
 ####Roadmap
 * adds useful observable on special event

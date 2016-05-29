@@ -5,11 +5,7 @@ import lorance.rxscoket._
 import lorance.rxscoket.session.{ConnectedSocket, ServerEntrance}
 import rx.lang.scala.Observable
 
-/**
-  * TODO difference between Observer and Subscription? both of them has OnNext, OnError, OnComplete.which stage in Rx is them place
-  */
 object DemoServerMain extends App {
-  logLevel = 1000
   val server = new ServerEntrance("localhost", 10002)
   val socket: Observable[ConnectedSocket] = server.listen
 
@@ -26,13 +22,6 @@ object DemoServerMain extends App {
   read.connect
 
   socket.subscribe(s => log(s"Hi, John2, someone connected - "))
-
-  //this way also make a subscribe event to hot Observable by explicit create new one. It seems odd but practical.
-//  var read2: Observable[Vector[CompletedProto]] = {
-//    val p = Promise[Observable[Vector[CompletedProto]]]
-//    socket.subscribe{l => log("read start reading");p.trySuccess(l.startReading)}
-//    Observable.from(p.future).flatten
-//  }
 
   read.subscribe{r =>
     log(s"first subscriber get protocol - ${new String(r._2.loaded.array())}")
