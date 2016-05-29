@@ -1,14 +1,13 @@
 package lorance.rxscoket.presentation.json
 
 import java.nio.ByteBuffer
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 
 import lorance.rxscoket._
 import lorance.rxscoket.session.{CompletedProto, ConnectedSocket}
 import lorance.rxscoket.session.implicitpkg._
 import net.liftweb.json.JsonAST.JValue
 import rx.lang.scala.{Subject, Observable}
-import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import net.liftweb.json._
 
@@ -17,10 +16,10 @@ import net.liftweb.json._
   */
 class JProtocol(connectedSocket: ConnectedSocket, read: Observable[CompletedProto]) {
 
-  private val tasks = mutable.HashMap[String, Subject[JValue]]()
-  def addTask(taskId: String, taskStream: Subject[JValue]) = tasks.synchronized(tasks.+=(taskId -> taskStream))
-  def removeTask(taskId: String) = tasks.synchronized(tasks.-=(taskId))
-  def getTask(taskId: String) = tasks.get(taskId)
+  private val tasks = new ConcurrentHashMap[String, Subject[JValue]]()
+  def addTask(taskId: String, taskStream: Subject[JValue]) = tasks.put(taskId, taskStream)
+  def removeTask(taskId: String) = tasks.remove(taskId)
+  def getTask(taskId: String) = Option(tasks.get(taskId))
 
   val jRead = {
     val j_read = read.map{cp =>
