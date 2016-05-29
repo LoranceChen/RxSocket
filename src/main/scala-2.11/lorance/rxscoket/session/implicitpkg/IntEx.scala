@@ -7,7 +7,8 @@ class IntEx(int: Int) {
   //enCode byte to Array[Byte]
   def getByteArray = {
     val bytes = new Array[Byte](4)
-    //Big Endian
+
+    //assume int is Big Endian
     bytes(0) = ((int >> 24) & 0xFF).toByte
     bytes(1) = ((int >> 16) & 0xFF).toByte
     bytes(2) = ((int >> 8) & 0xFF).toByte
@@ -15,4 +16,3 @@ class IntEx(int: Int) {
     bytes
   }
 }
-
