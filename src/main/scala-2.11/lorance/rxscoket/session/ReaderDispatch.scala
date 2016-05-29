@@ -107,7 +107,7 @@ class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Config
               log(s"${this.getClass.toString} : get protocol - ${(completed.uuid, completed.length, new String(completed.loaded.array))}", 85, Some("get protocol"))
               Some(completed)
             }
-          case PendingLength(arrived, number) =>
+          case PendingLength(arrived, number) => //todo PendingLength(_, _)
             tmpProto = PaddingProto(uuidOpt, lengthOpt, session.EmptyByteBuffer)
             None
         }
@@ -135,7 +135,7 @@ class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Config
         }
       case padding @ PaddingProto(Some(uuid), Some(pending @ PendingLength(arrived, number)), _) =>
         val lengthOpt = tryGetLength(src, Some(pending))
-        val protoOpt = lengthOpt match {
+        val protoOpt = lengthOpt match { //todo as flatMap
           case Some(length @ CompletedLength(_)) =>
             val lengthedProto = PaddingProto(Some(uuid), lengthOpt, session.EmptyByteBuffer)
             readLoad(src, lengthedProto)
