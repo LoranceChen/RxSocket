@@ -171,3 +171,12 @@ v0.9.2
 * add heart beat to test connect on works
 * encapsulate taskId because it must be unique.
 * add Model and Service concept to support specify Req an Rsp.
+
+bug  
+1. 发送以后立即检测不能解决被立刻接收
+检测和发送是两个任务
+
+2. 断开以后无法取消任务
+
+###坑
+如果取消一个任务必须在execute()中指定控制nextTask返回None

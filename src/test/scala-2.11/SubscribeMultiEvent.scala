@@ -1,6 +1,6 @@
 import rx.lang.scala.{Subscriber, Subscription, Observable}
 import scala.collection.mutable
-import lorance.rxscoket.log
+import lorance.rxscoket.rxsocketLogger
 
 /**
   * construct loop to Observable stream
@@ -9,10 +9,10 @@ object SubscribeMultiEvent extends App {
   val ss = mutable.Set[Subscriber[String]]()
 
   new Thread {
-    log("construct thread")
+    rxsocketLogger.log("construct thread")
 
     override def run() {
-      log("new thread")
+      rxsocketLogger.log("new thread")
       printLoop
     }
 
@@ -24,7 +24,7 @@ object SubscribeMultiEvent extends App {
   val obv3 = obv2.map { x => foo; x }
 
   def getObv = {
-    log("getObv - ")
+    rxsocketLogger.log("getObv - ")
     val obv = Observable.apply[String] { s =>
       ss.synchronized(ss += s)
       s.add(Subscription(ss.synchronized(ss -= s)))
@@ -34,12 +34,12 @@ object SubscribeMultiEvent extends App {
   } //.subscribeOn(NewThreadScheduler())
   //todo `NewThreadScheduler` : what's a means of new thread scheduler? which stage it put the subscribe on new thread?
 
-  obv3.subscribe(s => log(s"first observer1 - $s"))
-  obv3.subscribe(s => log(s"first observer2 - $s"))
+  obv3.subscribe(s => rxsocketLogger.log(s"first observer1 - $s"))
+  obv3.subscribe(s => rxsocketLogger.log(s"first observer2 - $s"))
 
-  def boo = log("boo - ")
+  def boo = rxsocketLogger.log("boo - ")
 
-  def foo = log("foo - ")
+  def foo = rxsocketLogger.log("foo - ")
 
   def printLoop = {
     def printForever: Unit = {
@@ -57,9 +57,9 @@ object SubscribeMultiEvent extends App {
   * map will transfer its inner code - dangerous!!
   */
 object ObvMapTest extends App {
-  def boo = log("boo - ")
+  def boo = rxsocketLogger.log("boo - ")
 
-  def foo = log("foo - ")
+  def foo = rxsocketLogger.log("foo - ")
 
   val obvTest = Observable[String]{s =>
     s.onNext("hi~")

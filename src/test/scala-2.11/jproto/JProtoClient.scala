@@ -18,7 +18,7 @@ object JProtoClient extends App {
     observable.subscribe(
       s => {
         lst.synchronized(lst.+=(s))
-        lorance.rxscoket.log(s"overview Rsp ready - ${count.add} " + lst.mkString("\n"), -16)
+        lorance.rxscoket.rxsocketLogger.log(s"overview Rsp ready - ${count.add} " + lst.mkString("\n"), -16)
       },
       e => p.tryFailure(e),
       () => p.trySuccess(lst.toList)
@@ -30,18 +30,18 @@ object JProtoClient extends App {
   case class OverviewRsp(result: Option[OverviewContent], taskId: String) extends IdentityTask
   case class OverviewContent(id: String)
 
-  logLevel = 1
-  logAim ++= List("send completed", "get protocol")//, "send completed")
+  rxsocketLogger.logLevel = 1
+  rxsocketLogger.logAim ++= List("send completed", "get protocol")//, "send completed")
   val client = new ClientEntrance("localhost", 10011)
   val connect = client.connect
   connect.onComplete{
-    case Failure(f) => log(s"connect fail - $f", -10)
-    case Success(s) => log(s"connect success - $s", -10)
+    case Failure(f) => rxsocketLogger.log(s"connect fail - $f", -10)
+    case Success(s) => rxsocketLogger.log(s"connect success - $s", -10)
   }
 
   val sr = connect.map(s => (s, s.startReading))
 
-  val jproto = sr.map { x => log("hi strat reading"); new JProtocol(x._1, x._2) }
+  val jproto = sr.map { x => rxsocketLogger.log("hi strat reading"); new JProtocol(x._1, x._2) }
 
   def get(name: String) = {
     jproto.flatMap { s =>
@@ -56,7 +56,7 @@ object JProtoClient extends App {
     }
   }
 
-  log(s"begin send 1000 times for make jvm hot =============", -15)
+  rxsocketLogger.log(s"begin send 1000 times for make jvm hot =============", -15)
   for(i <- -1000 to -1) {
     get(s"ha${i}")
 //    justSend(s"ha${i}")
@@ -64,7 +64,7 @@ object JProtoClient extends App {
 
   Thread.sleep(7000)
 
-  log(s"begin send 30000 times  =============", -15)
+  rxsocketLogger.log(s"begin send 30000 times  =============", -15)
   for(i <- 1 to 30000) {
     get(s"ha${i}")
 //    justSend(s"ha${i}")

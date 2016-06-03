@@ -5,13 +5,13 @@ import rx.lang.scala.ImplicitFunctionConversions._
 import rx.lang.scala.schedulers.{IOScheduler, TestScheduler, NewThreadScheduler}
 import rx.lang.scala.subjects.PublishSubject
 import rx.schedulers.Schedulers
-import lorance.rxscoket.log
+import lorance.rxscoket._
 /**
   *
   */
 object MultiThreadTask extends App {
   val t = new Thread{
-    log("")
+    rxsocketLogger.log("")
     override def run(): Unit = test
 
     start()
@@ -87,12 +87,12 @@ RxNewThreadScheduler-3: observer2 - 400
 //      observeOn(sch).
 //      compose{ x =>
 //        x.subscribeOn(NewThreadScheduler()).observeOn(NewThreadScheduler())}.
-      map { data => log("first mapped observable - " + (data * 10).toString); data * 10 }.
-      map { data => log("second mapped observable - " + (data * 10).toString); data * 10 }//.
+      map { data => rxsocketLogger.log("first mapped observable - " + (data * 10).toString); data * 10 }.
+      map { data => rxsocketLogger.log("second mapped observable - " + (data * 10).toString); data * 10 }//.
 //      compose{x => x.doOnNext(n =>log("compose " + n.toString))}.
 
-    obv.subscribe(data => log("observer - " + data.toString))
-    obv.subscribe(data => log("observer2 - " + data.toString))
+    obv.subscribe(data => rxsocketLogger.log("observer - " + data.toString))
+    obv.subscribe(data => rxsocketLogger.log("observer2 - " + data.toString))
   }
 
   /**
@@ -134,12 +134,12 @@ RxNewThreadScheduler-3: observer twice - 400
 //      observeOn(NewThreadScheduler())
 //      combine{ x =>
 //        x.subscribeOn(NewThreadScheduler()).observeOn(NewThreadScheduler())}
-    val obvMapOnce =  obv.map { data => log("first mapped observable - " + (data * 10).toString); data * 10 }
-    val obvMapTwice = obvMapOnce.map { data => log("second mapped observable - " + (data * 10).toString); data * 10 }//.
+    val obvMapOnce =  obv.map { data => rxsocketLogger.log("first mapped observable - " + (data * 10).toString); data * 10 }
+    val obvMapTwice = obvMapOnce.map { data => rxsocketLogger.log("second mapped observable - " + (data * 10).toString); data * 10 }//.
     //      compose{x => x.doOnNext(n =>log("compose " + n.toString))}.
 
-    obvMapOnce.subscribe(data => log("observer once - " + data.toString))
-    obvMapTwice.subscribe(data => log("observer twice - " + data.toString))
+    obvMapOnce.subscribe(data => rxsocketLogger.log("observer once - " + data.toString))
+    obvMapTwice.subscribe(data => rxsocketLogger.log("observer twice - " + data.toString))
   }
 
   def test3 = {
@@ -151,14 +151,14 @@ RxNewThreadScheduler-3: observer twice - 400
             observeOn(NewThreadScheduler())
 //      compose{ x => //???? not have compose
 //      x.subscribeOn(NewThreadScheduler()).observeOn(NewThreadScheduler())}
-    val obvMapOnce =  obv.map { data => log("first mapped observable - " + (data * 10).toString); data * 10 }
-    val obvMapTwice = obvMapOnce.map { data => log("second mapped observable - " + (data * 10).toString); data * 10 }//.
+    val obvMapOnce =  obv.map { data => rxsocketLogger.log("first mapped observable - " + (data * 10).toString); data * 10 }
+    val obvMapTwice = obvMapOnce.map { data => rxsocketLogger.log("second mapped observable - " + (data * 10).toString); data * 10 }//.
     //      compose{x => x.doOnNext(n =>log("compose " + n.toString))}.
 
-    obvMapOnce.subscribe(data => log("MapOnce observer once - " + data.toString))
-    obvMapOnce.subscribe(data => log("MapOnce observer once - " + data.toString))
-    obvMapTwice.subscribe(data => log("MapTwice observer twice - " + data.toString))
-    obvMapTwice.subscribe(data => log("MapTwice observer twice - " + data.toString))
+    obvMapOnce.subscribe(data => rxsocketLogger.log("MapOnce observer once - " + data.toString))
+    obvMapOnce.subscribe(data => rxsocketLogger.log("MapOnce observer once - " + data.toString))
+    obvMapTwice.subscribe(data => rxsocketLogger.log("MapTwice observer twice - " + data.toString))
+    obvMapTwice.subscribe(data => rxsocketLogger.log("MapTwice observer twice - " + data.toString))
   }
 
 

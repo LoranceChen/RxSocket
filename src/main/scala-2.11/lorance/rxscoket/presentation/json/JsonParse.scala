@@ -18,7 +18,7 @@ object JsonParse {
   def enCode(jValue: JValue): Array[Byte] = enCode(compactRender(jValue))
 
   def enCode(jStr: String): Array[Byte] = {
-    log("encode jtr - " + jStr, 70)
+    rxsocketLogger.log("encode jtr - " + jStr, 70)
     session.enCode(1.toByte, jStr)
   }
 

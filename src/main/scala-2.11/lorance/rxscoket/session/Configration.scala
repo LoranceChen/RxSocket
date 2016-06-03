@@ -29,4 +29,7 @@ object Configration {
   var PACKAGE_CONTEXT_LENGTH = Int.MaxValue
 
   var CONNECT_TIME_LIMIT = 7 // second
+
+  var SEND_HEART_BEAT_BREAKTIME = 45 //second
+  var CHECK_HEART_BEAT_BREAKTIME = 60 // Should large then SEND_HEART_BEAT_BREAKTIME
 }

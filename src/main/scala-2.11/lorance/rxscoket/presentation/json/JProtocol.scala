@@ -14,18 +14,18 @@ import net.liftweb.json._
 /**
   * create a JProtocol to dispatch all json relate info bind with socket and it's read stream
   */
-class JProtocol(connectedSocket: ConnectedSocket, read: Observable[CompletedProto]) {
+class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[CompletedProto]) {
 
   private val tasks = new ConcurrentHashMap[String, Subject[JValue]]()
-  def addTask(taskId: String, taskStream: Subject[JValue]) = tasks.put(taskId, taskStream)
-  def removeTask(taskId: String) = tasks.remove(taskId)
-  def getTask(taskId: String) = Option(tasks.get(taskId))
+  private def addTask(taskId: String, taskStream: Subject[JValue]) = tasks.put(taskId, taskStream)
+  private def removeTask(taskId: String) = tasks.remove(taskId)
+  private def getTask(taskId: String) = Option(tasks.get(taskId))
 
   val jRead = {
     val j_read = read.map{cp =>
         if(cp.uuid == 1.toByte) {
           val load = cp.loaded.array.string
-          log(s"$load", 46, Some("proto-json"))
+          rxsocketLogger.log(s"$load", 46, Some("proto-json"))
           parseOpt(load)
         } else  None
       }.filter(_.nonEmpty).map(_.get)
@@ -35,10 +35,10 @@ class JProtocol(connectedSocket: ConnectedSocket, read: Observable[CompletedProt
         val taskId = (j \ "taskId").values.asInstanceOf[String]
         val subj = this.getTask(taskId)
         subj.foreach{
-          log(s"${compactRender(j)}", 18, Some("taskId-onNext"))
+          rxsocketLogger.log(s"${compactRender(j)}", 18, Some("taskId-onNext"))
           _.onNext(j)
         }
-        log(s"${compactRender(j)}", 78, Some("task-json"))
+        rxsocketLogger.log(s"${compactRender(j)}", 78, Some("task-json"))
       } catch {
         case e : Throwable => Unit
       }
@@ -72,7 +72,7 @@ class JProtocol(connectedSocket: ConnectedSocket, read: Observable[CompletedProt
     val extract = register.map{s => s.extractOpt[Result]}.filter(_.isDefined).map(_.get)
     val resultStream = additional.map(_(extract)).getOrElse(extract).
       timeout(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS)).
-      doOnError { e => log(s"[Throw] JProtocol.taskResult - ${any.taskId} - $e") }.
+      doOnError { e => rxsocketLogger.log(s"[Throw] JProtocol.taskResult - ${any.taskId} - $e") }.
       doOnCompleted{
         this.removeTask(any.taskId)
 //        connectedSocket.netMsgCountBuf.dec
@@ -102,7 +102,7 @@ class JProtocol(connectedSocket: ConnectedSocket, read: Observable[CompletedProt
     val extract = register.map{s => s.extractOpt[ResultWithTaskId]}.filter(_.isDefined).map(_.get)
     val resultStream = extract.takeWhile(_.result.nonEmpty).map(_.result.get).
       timeout(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS)).
-      doOnError { e => log(s"[Throw] JProtocol.taskResult - $any - $e") }.
+      doOnError { e => rxsocketLogger.log(s"[Throw] JProtocol.taskResult - $any - $e") }.
       doOnCompleted{
         this.removeTask(taskId)
       }

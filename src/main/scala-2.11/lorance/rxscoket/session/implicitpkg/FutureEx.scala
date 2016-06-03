@@ -1,6 +1,6 @@
 package lorance.rxscoket.session.implicitpkg
 
-import lorance.rxscoket.log
+import lorance.rxscoket.rxsocketLogger
 import scala.concurrent.{Promise, ExecutionContext, Future, blocking}
 
 sealed class FutureTimeoutException extends RuntimeException
@@ -12,7 +12,7 @@ class FutureEx[T](f: Future[T]) {
     Future {
       blocking(Thread.sleep(ms))
       if(!f.isCompleted) {
-        log(s"[Throw] - FutureTimeoutException after - ${ms}ms", 15)
+        rxsocketLogger.log(s"[Throw] - FutureTimeoutException after - ${ms}ms", 15)
         p.tryFailure(new FutureTimeoutException)
       } else {
         p.tryFailure(new FutureTimeoutNotOccur)

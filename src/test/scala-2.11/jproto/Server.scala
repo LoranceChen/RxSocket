@@ -26,11 +26,11 @@ object DemoServerMain extends App {
   case class Req(taskId: String, req: String) extends IdentityTask
   case class Rst(taskId: String, data: Option[String]) extends IdentityTask
 
-  read.flatMap(x => x._2).subscribe(x => log(s"x - ${x.loaded.array().string}"))
+  read.flatMap(x => x._2).subscribe(x => rxsocketLogger.log(s"x - ${x.loaded.array().string}"))
 
   var seq = 1
   val x = read.map{ x =>
-    log(s"some one connect - ${x}")
+    rxsocketLogger.log(s"some one connect - ${x}")
 
     //pong
     val sk = x._1
@@ -41,7 +41,7 @@ object DemoServerMain extends App {
       val b3 = JsonParse.enCode(Rst("thread-time", None))
       val b4 = JsonParse.enCode(Rst("thread-time", Some("content" + seq * 1000)))
 
-      log("seq - " + seq)
+      rxsocketLogger.log("seq - " + seq)
 
       seq = seq + 1
 

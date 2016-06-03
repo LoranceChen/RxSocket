@@ -6,8 +6,8 @@ import lorance.rxscoket.session.{Configration, ServerEntrance}
 import net.liftweb.json.JsonAST.JObject
 
 object JProtoServer extends App {
-  logLevel = 1
-  logAim ++= List[String]("send completed", "read success", "dispatch-protos")
+  rxsocketLogger.logLevel = 1
+  rxsocketLogger.logAim ++= List[String]("send completed", "read success", "dispatch-protos")
 
   val conntected = new ServerEntrance("127.0.0.1", 10011).listen
   val readX = conntected.map(c => (c, c.startReading))

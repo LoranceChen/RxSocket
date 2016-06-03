@@ -16,32 +16,34 @@ class ServerEntrance(host: String, port: Int) {
   private val connectionSubs = mutable.Set[Subscriber[ConnectedSocket]]()
   private def append(s: Subscriber[ConnectedSocket]) = connectionSubs.synchronized(connectionSubs += s)
   private def remove(s: Subscriber[ConnectedSocket]) = connectionSubs.synchronized(connectionSubs -= s)
-
+  private val heatBeats = new HeartBeats()
   val server: AsynchronousServerSocketChannel = {
     val server = AsynchronousServerSocketChannel.open
     val socketAddress: InetSocketAddress = new InetSocketAddress(host, port)
     val prepared = server.bind(socketAddress)
-    log(s"Server is prepare listen at - $socketAddress")
+    rxsocketLogger.log(s"Server is prepare listen at - $socketAddress")
     prepared
   }
 
+  private val heatBeatsManager = new HeartBeatsManager()
   /**
     * listen connection and emit every times connects event.
     */
   def listen: Observable[ConnectedSocket] = {
-    log("listen begin - ", 1)
-    connectForever
+    rxsocketLogger.log("listen begin - ", 1)
+    connectForever()
 
-    Observable.apply[ConnectedSocket]({ s =>
+    val connected = Observable.apply[ConnectedSocket]({ s =>
       append(s)
       s.add(Subscription(remove(s)))
     }).doOnCompleted {
-      log("socket connection - doOnCompleted")
+      rxsocketLogger.log("socket connection - doOnCompleted")
     }
+    connected
   }
 
-  private def connectForever = {
-    log("connect loop begin -", 1)
+  private def connectForever() = {
+    rxsocketLogger.log("connect loop begin -", 1)
     val f = connection(server)
 
     def connectForeverHelper(f: Future[AsynchronousSocketChannel]): Unit = {
@@ -49,8 +51,24 @@ class ServerEntrance(host: String, port: Int) {
         case Failure(e) =>
           for(s <- connectionSubs) {s.onError(e)}
         case Success(c) =>
-          log(s"client connected")
-          val connectedSocket = new ConnectedSocket(c)
+          val connectedSocket = new ConnectedSocket(c, heatBeatsManager, AddressPair(c.getLocalAddress.toString, c.getRemoteAddress.toString))
+          rxsocketLogger.log(s"client connected - ${connectedSocket.addressPair.remote}", 1, Some("connect"))
+
+          val sendHeartTask = new HeartBeatSendTask(
+            TaskKey(connectedSocket.addressPair.remote + ".SendHeartBeat", System.currentTimeMillis() + Configration.SEND_HEART_BEAT_BREAKTIME * 1000L),
+            Some(-1, Configration.SEND_HEART_BEAT_BREAKTIME * 1000L),
+            connectedSocket
+          )
+          val checkHeartTask = new HeartBeatCheckTask(
+            TaskKey(connectedSocket.addressPair.remote + ".CheckHeartBeat", System.currentTimeMillis() + Configration.CHECK_HEART_BEAT_BREAKTIME * 1000L),
+            Some(-1, Configration.CHECK_HEART_BEAT_BREAKTIME * 1000L),
+            connectedSocket
+          )
+
+          rxsocketLogger.log(s"add heart beat to mananger - $sendHeartTask; $checkHeartTask", 400, Some("heart-beat"))
+          heatBeatsManager.addTask(sendHeartTask)
+          heatBeatsManager.addTask(checkHeartTask)
+
           for(s <- connectionSubs) {s.onNext(connectedSocket)}
           val nextConn = connection(server)
           connectForeverHelper(nextConn)
@@ -63,11 +81,11 @@ class ServerEntrance(host: String, port: Int) {
     val p = Promise[AsynchronousSocketChannel]
     val callback = new CompletionHandler[AsynchronousSocketChannel, AsynchronousServerSocketChannel] {
       override def completed(result: AsynchronousSocketChannel, attachment: AsynchronousServerSocketChannel): Unit = {
-        log("connect - success")
+        rxsocketLogger.log("connect - success")
         p.trySuccess(result)
       }
       override def failed(exc: Throwable, attachment: AsynchronousServerSocketChannel): Unit = {
-        log("connect - failed")
+        rxsocketLogger.log("connect - failed")
         p.tryFailure(exc)
       }
     }

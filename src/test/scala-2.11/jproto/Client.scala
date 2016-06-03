@@ -22,10 +22,10 @@ object DemoClientMain extends App {
 
   val sockets = mutable.Map[ConnectedSocket, Observable[Vector[CompletedProto]]]()
 
-  logLevel = 100
+  rxsocketLogger.logLevel = 100
 
   val sendJProtocol = Observable.from(socket).map{l =>
-    log("new JProtocol")
+    rxsocketLogger.log("new JProtocol")
     new JProtocol(l, l.startReading)
   }//{l => log("new JProtocol"); new JProtocol(l, l.startReading)}//.publish
 
@@ -47,17 +47,17 @@ object DemoClientMain extends App {
     */
   def inputLoop = {
     while (true) {
-      log(s"input message:")
+      rxsocketLogger.log(s"input message:")
       val lineJStr = StdIn.readLine()
       val x2 = sendJProtocol.flatMap(l => l.sendWithResult[Rst, Req](Req("thread-time", lineJStr), Some((rst: Observable[Rst]) => rst.takeUntil(_.data.isEmpty))))//.publish
 
       x2.subscribe(
-        i => log(s"get result of the task - $i"),
+        i => rxsocketLogger.log(s"get result of the task - $i"),
         {
-          case e: TimeoutException =>log(s"task result onError - timeout")
-          case _ => log(s"task result onError - error")
+          case e: TimeoutException =>rxsocketLogger.log(s"task result onError - timeout")
+          case _ => rxsocketLogger.log(s"task result onError - error")
         },
-        () => log(s"task complete")
+        () => rxsocketLogger.log(s"task complete")
       )
     }
   }
