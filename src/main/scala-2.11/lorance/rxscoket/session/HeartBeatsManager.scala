@@ -40,11 +40,10 @@ class HeartBeatsManager {
 
     def put(task: Task): Unit = {
       val x = auxiliaryMap.put(task.taskId.id, task.taskId)
-      rxsocketLogger.log(s"put to auxiliaryMap - ${auxiliaryMap.get(task.taskId.id)}")
+      rxsocketLogger.log(s"put to auxiliaryMap - ${auxiliaryMap.get(task.taskId.id)}", 300)
 
-      val y = tasks.put(task.taskId, task)
-      rxsocketLogger.log(s"put to tasksMap - ${tasks.get(task.taskId)}")
-      y
+      tasks.put(task.taskId, task)
+      rxsocketLogger.log(s"put to tasksMap - ${tasks.get(task.taskId)}", 300)
     }
 
     def get(taskId: String) = {
