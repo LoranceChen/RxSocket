@@ -1,4 +1,4 @@
-# RxSocket - v0.9.2
+# RxSocket - v0.9.3
 socket with reactive style.
 
 ## Why do this project?
@@ -161,6 +161,10 @@ v0.9.1
 
 v0.9.2
 * use java ConcurrentHashMap at `JProtocol.sendWithResult` avoid lock data frequency.
+
+v0.9.3
+* extract Logger to `lorance.rxsocket.rxsocketLogger` class instance
+* add heart beat in session
 
 ####Roadmap
 * adds useful observable on special event
