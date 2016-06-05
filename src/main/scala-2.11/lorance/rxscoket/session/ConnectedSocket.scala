@@ -71,7 +71,7 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
               for (s <- readSubscribes) { s.onCompleted()}
             case _ =>
               rxsocketLogger.log(s"unhandle exception - $f")
-              for (s <- readSubscribes) { s.onError(f)}
+              for (s <- readSubscribes) { s.onCompleted()} //exception or onCompleted
           }
         case Success(c) =>
           val src = c.byteBuffer

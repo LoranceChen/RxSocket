@@ -16,7 +16,7 @@ class ServerEntrance(host: String, port: Int) {
   private val connectionSubs = mutable.Set[Subscriber[ConnectedSocket]]()
   private def append(s: Subscriber[ConnectedSocket]) = connectionSubs.synchronized(connectionSubs += s)
   private def remove(s: Subscriber[ConnectedSocket]) = connectionSubs.synchronized(connectionSubs -= s)
-  private val heatBeats = new HeartBeats()
+//  private val heatBeats = new HeartBeats()
   val server: AsynchronousServerSocketChannel = {
     val server = AsynchronousServerSocketChannel.open
     val socketAddress: InetSocketAddress = new InetSocketAddress(host, port)
