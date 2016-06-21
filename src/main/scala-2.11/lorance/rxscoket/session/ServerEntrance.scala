@@ -51,7 +51,8 @@ class ServerEntrance(host: String, port: Int) {
         case Failure(e) =>
           for(s <- connectionSubs) {s.onError(e)}
         case Success(c) =>
-          val connectedSocket = new ConnectedSocket(c, heatBeatsManager, AddressPair(c.getLocalAddress.toString, c.getRemoteAddress.toString))
+          val connectedSocket = new ConnectedSocket(c, heatBeatsManager, AddressPair(c.getLocalAddress.toString, c.getRemoteAddress.toString),
+            AddressPairOfficial(c.getLocalAddress.asInstanceOf[InetSocketAddress], c.getRemoteAddress.asInstanceOf[InetSocketAddress]))
           rxsocketLogger.log(s"client connected - ${connectedSocket.addressPair.remote}", 1, Some("connect"))
 
           val sendHeartTask = new HeartBeatSendTask(

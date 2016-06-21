@@ -1,5 +1,6 @@
 package lorance.rxscoket.session
 
+import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.{CompletionHandler, AsynchronousSocketChannel}
 import java.util.concurrent.Semaphore
@@ -17,10 +18,12 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 //as socket name or flag
 case class AddressPair(local: String, remote: String)
+case class AddressPairOfficial(local: InetSocketAddress, remote: InetSocketAddress)
 
 class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
                       heartBeatsManager: HeartBeatsManager,
-                      val addressPair: AddressPair) {
+                      val addressPair: AddressPair,
+                      val addressPairOfficial: AddressPairOfficial) {
   private val readerDispatch = new ReaderDispatch()
   private val readSubscribes = mutable.Set[Subscriber[CompletedProto]]()
 

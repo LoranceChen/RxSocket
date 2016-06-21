@@ -109,7 +109,7 @@ class HeartBeatsManager {
     rxsocketLogger.log("addTask - " + task)
     if(result._1) result._2.map{task => DataSet.put(task)} // success - put replaced task to set
     else DataSet.put(task) // fail - add current task to set
-    rxsocketLogger.log(s"tasks contains - ${DataSet.size}; add task - $task", -1)
+    rxsocketLogger.log(s"tasks contains - ${DataSet.size}; add task - $task", 600)
   }
 
   /**

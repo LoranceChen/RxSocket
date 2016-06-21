@@ -14,16 +14,18 @@ import scala.concurrent.Promise
   *
   */
 class ClientEntrance(remoteHost: String, remotePort: Int) {
+  val channel: AsynchronousSocketChannel = AsynchronousSocketChannel.open
+  val serverAddr: SocketAddress = new InetSocketAddress(remoteHost, remotePort)
+
   private val heartBeatManager = new HeartBeatsManager()
   def connect = {
-    val channel: AsynchronousSocketChannel = AsynchronousSocketChannel.open
-    val serverAddr: SocketAddress = new InetSocketAddress(remoteHost, remotePort)
-
     val p = Promise[ConnectedSocket]
     channel.connect(serverAddr, channel, new CompletionHandler[Void, AsynchronousSocketChannel]{
       override def completed(result: Void, attachment: AsynchronousSocketChannel): Unit = {
         rxsocketLogger.log(s"linked to server success", 1)
-        val connectedSocket = new ConnectedSocket(attachment, heartBeatManager, AddressPair(channel.getLocalAddress.toString, channel.getRemoteAddress.toString))
+        val connectedSocket = new ConnectedSocket(attachment, heartBeatManager, AddressPair(channel.getLocalAddress.toString, channel.getRemoteAddress.toString),
+          AddressPairOfficial(channel.getLocalAddress.asInstanceOf[InetSocketAddress], channel.getRemoteAddress.asInstanceOf[InetSocketAddress])
+        )
         heartBeatManager.addTask(new HeartBeatSendTask(
           TaskKey(connectedSocket.addressPair.remote + ".SendHeartBeat", System.currentTimeMillis() + Configration.SEND_HEART_BEAT_BREAKTIME * 1000L),
             Some(-1, Configration.SEND_HEART_BEAT_BREAKTIME * 1000L),
@@ -52,6 +54,12 @@ class ClientEntrance(remoteHost: String, remotePort: Int) {
       * 之前想到测试的方式是将服务端的端口绑定好ip地址,但不执行监听行为,但是就算这样,客户端依然认为是连接成功.
       */
     p.future.withTimeout(Configration.CONNECT_TIME_LIMIT * 1000)
+  }
+
+
+  //reconnect
+  def reconnect = {
+    connect
   }
 
   //todo client use light beat way
