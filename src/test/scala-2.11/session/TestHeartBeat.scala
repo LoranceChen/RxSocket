@@ -1,7 +1,7 @@
 package session
 
 import lorance.rxscoket._
-import lorance.rxscoket.session.{Configration, TaskKey, HeartBeatTask, HeartBeatsManager, ServerEntrance, ClientEntrance}
+import lorance.rxscoket.session.{ServerEntrance, ClientEntrance}
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
