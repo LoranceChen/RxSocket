@@ -71,7 +71,7 @@ class HeartBeatCheckTask ( val taskId: TaskKey,
     if(!connectedSocket.heart) {
       rxsocketLogger.log("disconnected because of no heart beat response")
       connectedSocket.disconnect
-      stop = true //control next task need
+      stop = true //control next task need stop
     } else {
       connectedSocket.heart = false
     }
