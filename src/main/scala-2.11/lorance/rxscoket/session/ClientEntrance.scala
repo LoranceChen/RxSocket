@@ -5,6 +5,7 @@ import java.nio.ByteBuffer
 import java.nio.channels.{CompletionHandler, AsynchronousSocketChannel}
 
 import lorance.rxscoket._
+import lorance.rxscoket.dispatch.{TaskManager, TaskKey}
 import lorance.rxscoket.session.implicitpkg._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -17,14 +18,14 @@ class ClientEntrance(remoteHost: String, remotePort: Int) {
   val channel: AsynchronousSocketChannel = AsynchronousSocketChannel.open
   val serverAddr: SocketAddress = new InetSocketAddress(remoteHost, remotePort)
 
-  private val heartBeatManager = new HeartBeatsManager()
+  private val heartBeatManager = new TaskManager()
   def connect = {
     val p = Promise[ConnectedSocket]
     channel.connect(serverAddr, channel, new CompletionHandler[Void, AsynchronousSocketChannel]{
       override def completed(result: Void, attachment: AsynchronousSocketChannel): Unit = {
         rxsocketLogger.log(s"linked to server success", 1)
-        val connectedSocket = new ConnectedSocket(attachment, heartBeatManager, AddressPair(channel.getLocalAddress.toString, channel.getRemoteAddress.toString),
-          AddressPairOfficial(channel.getLocalAddress.asInstanceOf[InetSocketAddress], channel.getRemoteAddress.asInstanceOf[InetSocketAddress])
+        val connectedSocket = new ConnectedSocket(attachment, heartBeatManager,
+          AddressPair(channel.getLocalAddress.asInstanceOf[InetSocketAddress], channel.getRemoteAddress.asInstanceOf[InetSocketAddress])
         )
         heartBeatManager.addTask(new HeartBeatSendTask(
           TaskKey(connectedSocket.addressPair.remote + ".SendHeartBeat", System.currentTimeMillis() + Configration.SEND_HEART_BEAT_BREAKTIME * 1000L),

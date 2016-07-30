@@ -1,9 +1,7 @@
-package lorance.rxscoket.session
-
-import java.nio.ByteBuffer
+package lorance.rxscoket.dispatch
 
 import rx.lang.scala.{Observable, Subject}
-import lorance.rxscoket.{session, rxsocketLogger}
+import lorance.rxscoket.rxsocketLogger
 import rx.lang.scala.schedulers.ExecutionContextScheduler
 import concurrent.ExecutionContext.Implicits.global
 
@@ -16,7 +14,7 @@ import concurrent.ExecutionContext.Implicits.global
   *
   * Notice: task should be recover by `Manage` if stop, also its matter of `Manage`
   */
-class HeartBeats {
+class TaskHolder {
 
   private val subject = Subject[Task]() // emit completed event
 

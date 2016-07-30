@@ -5,6 +5,7 @@ import java.nio.ByteBuffer
 import java.nio.channels.{CompletionHandler, AsynchronousSocketChannel}
 import java.util.concurrent.Semaphore
 
+import lorance.rxscoket.dispatch.TaskManager
 import lorance.rxscoket.session.exception.ReadResultNegativeException
 import lorance.rxscoket._
 import lorance.rxscoket.session.implicitpkg._
@@ -17,13 +18,12 @@ import scala.util.{Try, Success, Failure}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 //as socket name or flag
-case class AddressPair(local: String, remote: String)
-case class AddressPairOfficial(local: InetSocketAddress, remote: InetSocketAddress)
+//case class AddressPair(local: String, remote: String)
+case class AddressPair(local: InetSocketAddress, remote: InetSocketAddress)
 
 class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
-                      heartBeatsManager: HeartBeatsManager,
-                      val addressPair: AddressPair,
-                      val addressPairOfficial: AddressPairOfficial) {
+                      heartBeatsManager: TaskManager,
+                      val addressPair: AddressPair) {
   private val readerDispatch = new ReaderDispatch()
   private val readSubscribes = mutable.Set[Subscriber[CompletedProto]]()
 

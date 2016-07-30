@@ -4,6 +4,7 @@ import java.net.InetSocketAddress
 import java.nio.channels.{CompletionHandler, AsynchronousSocketChannel, AsynchronousServerSocketChannel}
 
 import lorance.rxscoket._
+import lorance.rxscoket.dispatch.{TaskKey, TaskManager}
 import rx.lang.scala.{Subscription, Subscriber, Observable}
 
 import scala.concurrent.{Promise, Future}
@@ -25,7 +26,7 @@ class ServerEntrance(host: String, port: Int) {
     prepared
   }
 
-  private val heatBeatsManager = new HeartBeatsManager()
+  private val heatBeatsManager = new TaskManager()
   /**
     * listen connection and emit every times connects event.
     */
@@ -51,8 +52,8 @@ class ServerEntrance(host: String, port: Int) {
         case Failure(e) =>
           for(s <- connectionSubs) {s.onError(e)}
         case Success(c) =>
-          val connectedSocket = new ConnectedSocket(c, heatBeatsManager, AddressPair(c.getLocalAddress.toString, c.getRemoteAddress.toString),
-            AddressPairOfficial(c.getLocalAddress.asInstanceOf[InetSocketAddress], c.getRemoteAddress.asInstanceOf[InetSocketAddress]))
+          val connectedSocket = new ConnectedSocket(c, heatBeatsManager,
+            AddressPair(c.getLocalAddress.asInstanceOf[InetSocketAddress], c.getRemoteAddress.asInstanceOf[InetSocketAddress]))
           rxsocketLogger.log(s"client connected - ${connectedSocket.addressPair.remote}", 1, Some("connect"))
 
           val sendHeartTask = new HeartBeatSendTask(
