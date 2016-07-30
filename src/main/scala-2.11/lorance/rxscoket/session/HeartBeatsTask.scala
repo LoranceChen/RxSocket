@@ -60,7 +60,7 @@ class HeartBeatCheckTask ( val taskId: TaskKey,
     case _ => None
   }
 
-  private var stop = false
+//  private var stop = false
 
   //connect http server and do the action cmd
   //when executed, tell Waiter Thread not return current thread
@@ -71,7 +71,7 @@ class HeartBeatCheckTask ( val taskId: TaskKey,
     if(!connectedSocket.heart) {
       rxsocketLogger.log("disconnected because of no heart beat response")
       connectedSocket.disconnect
-      stop = true //control next task need stop
+//      stop = true //control next task need stop
     } else {
       connectedSocket.heart = false
     }
@@ -82,8 +82,8 @@ class HeartBeatCheckTask ( val taskId: TaskKey,
     * 2. ensure loopTime not decrease if it is a always model
     */
   override def nextTask: Option[Task] = {
-    if (stop) None
-    else {
+//    if (stop) None
+//    else {
       nextTime.map(x => new HeartBeatCheckTask(
         TaskKey(taskId.id, x),
         loopAndBreakTimes.map { case (loopTime, breakTime) =>
@@ -92,6 +92,6 @@ class HeartBeatCheckTask ( val taskId: TaskKey,
         },
         connectedSocket
       ))
-    }
+//    }
   }
 }
