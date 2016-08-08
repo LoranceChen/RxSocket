@@ -167,11 +167,11 @@ v0.9.3
 * add heart beat in session
 
 ####Roadmap
-* adds useful observable on special event
-* handle reconnect and relative notification
-* need read Queue and write Queue - ensure same request thread i/o socket with FIFO
-* log method add class path: replace Int log level by readable words. Related by package, class and importance.
-* to solve head-of-line blocking with multi socket
-* add heart beat to test connect on works
+* adds useful observable on special event[x]
+* handle reconnect and relative notification[abort]
+* need read Queue and write Queue - ensure same request thread i/o socket with FIFO[abort]
+* log method add class path: replace Int log level by readable words. Related by package, class and importance.[abort]
+* to solve head-of-line blocking with multi socket[abort]
+* add heart beat to test connect on works[x]
 * encapsulate taskId because it must be unique.
 * add Model and Service concept to support specify Req an Rsp.
