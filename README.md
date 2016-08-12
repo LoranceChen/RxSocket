@@ -10,6 +10,10 @@ Layer, it also allow anyone to redesign Presentation Layer easily.
 ## Example
 
 
+## Maven artifact
+```
+
+```
 ####UPDATE  
 1. catch disconnected exception
 2. add loop send msg simulate
@@ -45,3 +49,4 @@ v0.9.3
 ####Roadmap
 * encapsulate taskId because it must be unique.
 * add Model and Service concept to support specify Req an Rsp.
+* split every proto msg(or inner proto data type) with specify notation.
