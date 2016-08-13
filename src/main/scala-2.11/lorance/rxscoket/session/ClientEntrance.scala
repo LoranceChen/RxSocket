@@ -58,11 +58,6 @@ class ClientEntrance(remoteHost: String, remotePort: Int) {
   }
 
 
-  //reconnect
-  def reconnect = {
-    connect
-  }
-
   //todo client use light beat way
 //  private val heartLock = new AnyRef
 //  private val heartData = session.enCode(0.toByte, "heart beat")
