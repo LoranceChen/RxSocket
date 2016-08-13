@@ -18,7 +18,7 @@ class HeartBeatSendTask ( val taskId: TaskKey,
   //connect http server and do the action cmd
   //when executed, tell Waiter Thread not return current thread
   override def execute(): Unit = {
-    rxsocketLogger.log("execute send heart beat task")
+    rxsocketLogger.log("execute send heart beat task", 20)
 
     connectedSocket.send(ByteBuffer.wrap(session.enCode(0.toByte, "heart beat")))
   }
@@ -50,11 +50,10 @@ class HeartBeatCheckTask ( val taskId: TaskKey,
   }
 
   override def execute(): Unit = {
-    rxsocketLogger.log("execute check heart beat task")
+    rxsocketLogger.log("execute check heart beat task", 20)
 
-    //todo check does heart is true otherwise disconnect socket
     if(!connectedSocket.heart) {
-      rxsocketLogger.log("disconnected because of no heart beat response")
+      rxsocketLogger.log("disconnected because of no heart beat response", 10)
       connectedSocket.disconnect
     } else {
       connectedSocket.heart = false
