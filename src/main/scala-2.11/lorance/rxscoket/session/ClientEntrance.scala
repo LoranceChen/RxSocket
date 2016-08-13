@@ -56,34 +56,4 @@ class ClientEntrance(remoteHost: String, remotePort: Int) {
       */
     p.future.withTimeout(Configration.CONNECT_TIME_LIMIT * 1000)
   }
-
-
-  //todo client use light beat way
-//  private val heartLock = new AnyRef
-//  private val heartData = session.enCode(0.toByte, "heart beat")
-//  private val
-//  private def beginBeat = {
-//
-//    val heartThread = new Thread {
-//      setDaemon(true)
-//
-//      override def run(): Unit = {
-//        while(true) {
-//          heartLock.synchronized{
-//            heart = false
-//            println("send heart beat data")
-//            send(ByteBuffer.wrap(heartData))
-//            heartLock.wait(Configration.HEART_BEAT_BREAKTIME * 1000)
-//            if(!heart) { //not receive response
-//              println("disconnected because of no heart beat response")
-//              disconnect()
-//              return
-//            }
-//          }
-//        }
-//      }
-//    }
-//
-//    heartThread.start()
-//  }
 }
