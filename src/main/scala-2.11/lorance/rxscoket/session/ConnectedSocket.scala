@@ -81,7 +81,7 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
             rxsocketLogger.log(s"dispatched protos - ${protos.map(p => p.loaded.array().string)}", 70, Some("dispatch-protos"))
             protos.foreach{proto =>
               //filter heart beat proto
-              rxsocketLogger.log(s"completed proto - $proto", 130, Some("heart-beat"))
+              rxsocketLogger.log(s"completed proto - $proto", 130)
 
               if(proto.uuid == 0.toByte) {
                 rxsocketLogger.log(s"dispatched heart beat - $proto", 100, Some("heart-beat"))

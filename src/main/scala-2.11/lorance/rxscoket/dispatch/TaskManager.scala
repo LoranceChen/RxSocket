@@ -115,7 +115,7 @@ class TaskManager {
         Option{
           val removed = tasks.remove(taskKey)
           Option(removed).foreach(x => auxiliaryMap.remove(x.taskId.id))
-          rxsocketLogger.log(s"remove - $taskKey - form tasksMap - $removed; tasks.size = ${tasks.size()}")
+          rxsocketLogger.log(s"remove - $taskKey - form tasksMap - $removed; tasks.size = ${tasks.size()}", 100)
           removed
         }
       }
@@ -123,7 +123,7 @@ class TaskManager {
       def remove(taskId: String) = {
         auxiliaryMap.remove(taskId).map { taskKey =>
           val removed = tasks.remove(taskKey)
-          rxsocketLogger.log(s"remove - $taskKey - form tasksMap - $removed; tasks.size = ${tasks.size()}")
+          rxsocketLogger.log(s"remove - $taskKey - form tasksMap - $removed; tasks.size = ${tasks.size()}", 100)
           removed
         }
       }

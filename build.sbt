@@ -12,7 +12,7 @@ ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
 
 overridePublishSettings
 
-sonatypeProfileName := "com.scalachan"
+sonatypeProfileName := "com.github.lorancechen"
 
 //exportJars := true
 //enablePlugins(SignedAetherPlugin)
@@ -58,8 +58,8 @@ publishTo <<= version { (v: String) =>
 }
 
 libraryDependencies ++= Seq(
-  "io.reactivex" %% "rxscala" % "0.26.1",
-  "net.liftweb" %% "lift-json" % "3.0-M8"
+  "io.reactivex" %% "rxscala" % "0.26.2",
+  "net.liftweb" %% "lift-json" % "3.0-RC3"
 )
 
 //
@@ -69,25 +69,23 @@ libraryDependencies ++= Seq(
 //
 ////credentials += Credentials(Path.userHome / ".ivy2" / ".nexus_cred")
 
-//
-//
-//pomExtra in Global :=
-//  <url>https://github.com/LoranceChen/RxSocket</url>
-//    <licenses>
-//      <license>
-//        <name>Apache License, Version 2.0</name>
-//        <url>http://www.apache.org/licenses/LICENSE-2.0</url>
-//      </license>
-//    </licenses>
-//    <scm>
-//      <url>git@github.com/LoranceChen/RxSocket.git</url>
-//      <connection>scm:git:git@github.com/LoranceChen/RxSocket.git</connection>
-//    </scm>
-//    <developers>
-//      <developer>
-//        <id>lorancechen</id>
-//        <name>UnlimitedCode Inc.</name>
-//        <url>https://www.scalachan.com/</url>
-//      </developer>
-//    </developers>
-//
+pomExtra in Global :=
+  <url>https://github.com/LoranceChen/RxSocket</url>
+    <licenses>
+      <license>
+        <name>Apache License, Version 2.0</name>
+        <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+      </license>
+    </licenses>
+    <scm>
+      <url>git@github.com/LoranceChen/RxSocket.git</url>
+      <connection>scm:git:git@github.com/LoranceChen/RxSocket.git</connection>
+    </scm>
+    <developers>
+      <developer>
+        <id>lorancechen</id>
+        <name>UnlimitedCode Inc.</name>
+        <url>https://www.scalachan.com/</url>
+      </developer>
+    </developers>
+
