@@ -22,8 +22,17 @@ Layer, it also allow anyone to redesign Presentation Layer easily.
   <version>0.9.7</version>
 </dependency>
 ```
+
+###Dependency
+* [RxScala](https://github.com/ReactiveX/RxScala)
+* [lift-json](https://github.com/lift/lift/tree/master/framework/lift-base/lift-json)
+
+###Feature
+* do logic with reactive style with `Observable` and `Future`
+* with RPC stream can get a publish-subscribe socket communicate.
+
 ###Example
-todo
+[simple example in test/demo directory](https://github.com/LoranceChen/RxSocket/tree/master/src/test/scala-2.11/demo)
 
 ####UPDATE  
 1. catch disconnected exception
