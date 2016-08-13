@@ -1,10 +1,10 @@
-import sbt._
+//import sbt._
 
-version := "0.9.4"
+version := "0.9.6"
 
 name := "rxsocket"
 
-organization := "com.lorancechen"
+organization := "com.scalachan"
 
 scalaVersion := "2.11.7"
 
@@ -15,26 +15,25 @@ overridePublishSettings
 sonatypeProfileName := "com.github.lorancechen"
 
 //exportJars := true
-//enablePlugins(SignedAetherPlugin)
+enablePlugins(SignedAetherPlugin)
 //
-//disablePlugins(AetherPlugin)
-//
+disablePlugins(AetherPlugin)
 
 //useGpg := true
 //
 //pgpReadOnly := false
 
 //Configuration: Key Pair Locations
-//pgpSecretRing := file(Path.userHome + ".sbt/gpg/secring.asc")
-//
-//pgpPublicRing := file(Path.userHome + ".sbt/gpg/pubring.asc")
+pgpSecretRing := file(Path.userHome + "/.sbt/gpg/secring.asc")
+
+pgpPublicRing := file(Path.userHome + "/.sbt/gpg/pubring.asc")
 
 //credentials += Credentials("Sonatype Nexus",
 //  "localhost:7070",
 //  "admin",
 //  "admin123")
 
-publishArtifact in (Compile, packageDoc) := false
+publishArtifact in (Compile, packageDoc) := true
 
 resolvers ++= Seq(
   "main" at "http://repo1.maven.org/maven2",
@@ -43,7 +42,7 @@ resolvers ++= Seq(
   "Sonatype Nexus" at "https://oss.sonatype.org/content/repositories/snapshots"
 )
 
-externalResolvers := Resolver.withDefaultResolvers(resolvers.value, mavenCentral = false)
+//externalResolvers := Resolver.withDefaultResolvers(resolvers.value, mavenCentral = false)
 
 parallelExecution in Test := false
 
@@ -51,8 +50,9 @@ publishTo <<= version { (v: String) =>
   val nexus = "https://oss.sonatype.org/"
   if (v.trim.endsWith("SNAPSHOT"))
     Some("snapshots" at nexus + "content/repositories/snapshots")
+//  Some("Sonatype Nexus Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots")
   else
-    Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+    Some("Sonatype Nexus Staging"  at nexus + "service/local/staging/deploy/maven2")
 //    Some("releases"  at "http://localhost:7070/nexus/repository/maven-releases/")
 
 }
@@ -63,11 +63,11 @@ libraryDependencies ++= Seq(
 )
 
 //
-//publishArtifact in Test := false
-//
+publishArtifact in Test := false
+
 //pomIncludeRepository := { _ => false }
 //
-////credentials += Credentials(Path.userHome / ".ivy2" / ".nexus_cred")
+credentials += Credentials(Path.userHome / ".ivy2" / ".nexus_cred")
 
 pomExtra in Global :=
   <url>https://github.com/LoranceChen/RxSocket</url>
