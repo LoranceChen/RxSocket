@@ -17,8 +17,6 @@ import scala.concurrent.{Future, Promise}
 import scala.util.{Try, Success, Failure}
 import scala.concurrent.ExecutionContext.Implicits.global
 
-//as socket name or flag
-//case class AddressPair(local: String, remote: String)
 case class AddressPair(local: InetSocketAddress, remote: InetSocketAddress)
 
 class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
@@ -42,25 +40,25 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
   lazy val disconnect = {
 
     Try(socketChannel.close()) match {
-      case Failure(e) => rxsocketLogger.log(s"socket close - $addressPair - excption - $e")
-      case Success(_) => rxsocketLogger.log(s"socket close success - $addressPair")
+      case Failure(e) => rxsocketLogger.log(s"socket close - $addressPair - exception - $e", 10)
+      case Success(_) => rxsocketLogger.log(s"socket close success - $addressPair", 10)
     }
     heartBeatsManager.cancelTask(addressPair.remote + ".SendHeartBeat")
     heartBeatsManager.cancelTask(addressPair.remote + ".CheckHeartBeat")
     closeObv.onNext(addressPair)
     closeObv.onCompleted()
-    rxsocketLogger.log(s"disconnected socket - $addressPair")
+//    rxsocketLogger.log(s"disconnected socket - $addressPair")
   }
 
   val startReading: Observable[CompletedProto] = {
-    rxsocketLogger.log(s"beginReading - ", 1)
+    rxsocketLogger.log(s"beginReading - ", 10)
     beginReading()
     Observable.apply[CompletedProto]({ s =>
       append(s)
       s.add(Subscription(remove(s)))
     }).onBackpressureBuffer.
       observeOn(ExecutionContextScheduler(global)).doOnCompleted {
-      rxsocketLogger.log("socket read - doOnCompleted")
+      rxsocketLogger.log("socket reading - doOnCompleted", 10)
     }
   }
 
@@ -70,10 +68,10 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
         case Failure(f) =>
           f match {
             case e: ReadResultNegativeException =>
-              rxsocketLogger.log(s"$getClass - read finished")
+              rxsocketLogger.log(s"$getClass - read finished", 15)
               for (s <- readSubscribes) { s.onCompleted()}
             case _ =>
-              rxsocketLogger.log(s"unhandle exception - $f")
+              rxsocketLogger.log(s"unhandle exception - $f", 15)
               for (s <- readSubscribes) { s.onCompleted()} //exception or onCompleted
           }
         case Success(c) =>
@@ -83,7 +81,7 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
             rxsocketLogger.log(s"dispatched protos - ${protos.map(p => p.loaded.array().string)}", 70, Some("dispatch-protos"))
             protos.foreach{proto =>
               //filter heart beat proto
-              rxsocketLogger.log(s"completed proto - $proto", 130, Some("heart-beat"))
+              rxsocketLogger.log(s"completed proto - $proto", 130)
 
               if(proto.uuid == 0.toByte) {
                 rxsocketLogger.log(s"dispatched heart beat - $proto", 100, Some("heart-beat"))
@@ -143,13 +141,13 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
           p.trySuccess(attach)
         } else {
           disconnect
-          rxsocketLogger.log(s"disconnected - result = -1")
+          rxsocketLogger.log(s"disconnected - result = -1", 15)
           p.tryFailure(new ReadResultNegativeException())
         }
       }
 
       override def failed(exc: Throwable, attachment: Attachment): Unit = {
-        rxsocketLogger.log(s"socket read I/O operations fails - $exc")
+        rxsocketLogger.log(s"socket read I/O operations fails - $exc", 15)
         disconnect
         p.tryFailure(exc)
       }
@@ -160,7 +158,7 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
       socketChannel.read(readAttach.byteBuffer, readAttach, callback)
     } catch {
       case t: Throwable =>
-        rxsocketLogger.log(s"[Throw] - $t", 0)
+        rxsocketLogger.log(s"[Throw] - $t", 10)
         throw t
     }
 

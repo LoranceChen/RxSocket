@@ -1,19 +1,15 @@
-# RxSocket - v0.9.3
+# RxSocket - v0.9.7
 socket with reactive style.
 
-## Why do this project?
+## Why do this project
 Reactive programming has important concept of stream.It's very ease to apply data similar task, furthermore, network 
 programming is designed as many layer for different data types. It's nature and useful if use Reactive Style to practice
 a network data stream.At upper of TCP, I will beginning to complete basic function of Session Layer and Json Presentation 
 Layer, it also allow anyone to redesign Presentation Layer easily.
 
-## Example
+###Example
+todo
 
-
-## Maven artifact
-```
-
-```
 ####UPDATE  
 1. catch disconnected exception
 2. add loop send msg simulate

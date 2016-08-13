@@ -1,10 +1,12 @@
 package lorance.rxscoket.dispatch
 
+import java.util
+
 import lorance.rxscoket.rxsocketLogger
 
 import java.util.Comparator
-import java.util.concurrent._
 
+import scala.collection.mutable
 import scala.concurrent.Promise
 
 /**
@@ -69,7 +71,7 @@ class TaskManager {
 
 
     private object DataSet {
-      private val tasks = new ConcurrentSkipListMap[TaskKey, Task](new Comparator[TaskKey]() {
+      private val tasks = new util.TreeMap[TaskKey, Task](new Comparator[TaskKey]() {
         override def compare(o1: TaskKey, o2: TaskKey): Int = {
           val compare = (o1.systemTime - o2.systemTime).toInt
           //return 1 will cause dead lock, we should always promise compare result is great or little
@@ -80,7 +82,8 @@ class TaskManager {
         }
       })
 
-      private val auxiliaryMap = new ConcurrentHashMap[String, TaskKey]()
+//      private val auxiliaryMap = new ConcurrentHashMap[String, TaskKey]()
+      private val auxiliaryMap = mutable.Map[String, TaskKey]()
 
       def pollFirst = {
         val first = Option(tasks.pollFirstEntry())
@@ -103,28 +106,26 @@ class TaskManager {
       }
 
       def get(taskId: String) = {
-        Option(auxiliaryMap.get(taskId)).flatMap(key =>
-          Option(tasks.get(key))
+        auxiliaryMap.get(taskId).map(key =>
+          tasks.get(key)
         )
       }
 
       def remove(taskKey: TaskKey) = {
         Option{
           val removed = tasks.remove(taskKey)
-          rxsocketLogger.log(s"remove - $taskKey - form tasksMap - $removed; tasks.size = ${tasks.size()}")
+          Option(removed).foreach(x => auxiliaryMap.remove(x.taskId.id))
+          rxsocketLogger.log(s"remove - $taskKey - form tasksMap - $removed; tasks.size = ${tasks.size()}", 100)
           removed
         }
       }
 
       def remove(taskId: String) = {
-        Option(auxiliaryMap.get(taskId)).flatMap(taskKey =>
-          Option{
-            auxiliaryMap.remove(taskId)
-            val removed = tasks.remove(taskKey)
-            rxsocketLogger.log(s"remove - $taskKey - form tasksMap - $removed; tasks.size = ${tasks.size()}")
-            removed
-          }
-        )
+        auxiliaryMap.remove(taskId).map { taskKey =>
+          val removed = tasks.remove(taskKey)
+          rxsocketLogger.log(s"remove - $taskKey - form tasksMap - $removed; tasks.size = ${tasks.size()}", 100)
+          removed
+        }
       }
 
       def update(older: TaskKey, newTask: Option[Task]) = {

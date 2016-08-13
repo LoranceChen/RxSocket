@@ -1,7 +1,7 @@
 package session
 
 import lorance.rxscoket._
-import lorance.rxscoket.session.{ServerEntrance, ClientEntrance}
+import lorance.rxscoket.session.{Configration, ServerEntrance, ClientEntrance}
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -10,6 +10,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
   */
 object TestHeartBeatClient extends App {
   val client = new ClientEntrance("127.0.0.1", 10000)
+  Configration.CHECK_HEART_BEAT_BREAKTIME = 8
+  Configration.SEND_HEART_BEAT_BREAKTIME = 5
   lorance.rxscoket.rxsocketLogger.logAim = ListBuffer("heart-beat")
   rxsocketLogger.logLevel = 1000
 
@@ -21,6 +23,8 @@ object TestHeartBeatClient extends App {
 object TestHeartBeatServer extends App {
   import lorance.rxscoket.rxsocketLogger
   rxsocketLogger.logLevel = 1000
+  Configration.CHECK_HEART_BEAT_BREAKTIME = 8
+  Configration.SEND_HEART_BEAT_BREAKTIME = 5
   val server = new ServerEntrance("127.0.0.1", 10000)
   lorance.rxscoket.rxsocketLogger.logAim = ListBuffer("heart-beat")
 

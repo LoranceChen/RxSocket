@@ -86,8 +86,8 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
   }
 
   /**
-    * auto attach taskId
-    *
+    * attempt auto attach taskId
+    * can't work now......
     * @tparam Result return json extractable class, should be case class
     * @tparam Req should be case class
     * @return
