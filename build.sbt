@@ -1,6 +1,6 @@
 //import sbt._
 
-version := "0.9.6"
+version := "0.9.7"
 
 name := "rxsocket"
 
@@ -12,7 +12,7 @@ ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
 
 overridePublishSettings
 
-sonatypeProfileName := "com.github.lorancechen"
+sonatypeProfileName := "com.scalachan"
 
 //exportJars := true
 enablePlugins(SignedAetherPlugin)
