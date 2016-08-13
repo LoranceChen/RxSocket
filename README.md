@@ -7,6 +7,21 @@ programming is designed as many layer for different data types. It's nature and 
 a network data stream.At upper of TCP, I will beginning to complete basic function of Session Layer and Json Presentation 
 Layer, it also allow anyone to redesign Presentation Layer easily.
 
+###SBT Usage
+```
+"com.scalachan" %% "rxsocket" % "0.9.7"
+//or full name
+"com.scalachan" % "rxsocket_2.11" % "0.9.7"
+```
+
+###Maven Usage
+```
+<dependency>
+  <groupId>com.scalachan</groupId>
+  <artifactId>rxsocket</artifactId>
+  <version>0.9.7</version>
+</dependency>
+```
 ###Example
 todo
 
