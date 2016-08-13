@@ -66,6 +66,9 @@ v0.9.3
 * extract Logger to `lorance.rxsocket.rxsocketLogger` class instance
 * add heart beat in session
 
+v0.9.5
+* TimerTask dispatch with message queue to avoid concurrent problem.
+
 ####Roadmap
 * encapsulate taskId because it must be unique.
 * add Model and Service concept to support specify Req an Rsp.
