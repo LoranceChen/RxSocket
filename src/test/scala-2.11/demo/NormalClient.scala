@@ -1,13 +1,12 @@
 package demo
 
 import java.nio.ByteBuffer
-import lorance.rxscoket._
 import lorance.rxscoket.session._
 import rx.lang.scala.Observable
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
-  *
+  * simplest Example
   */
 object NormalClient extends App{
 
@@ -34,3 +33,9 @@ object NormalClient extends App{
 
   Thread.currentThread().join()
 }
+
+/**
+OUTPUT:
+get info from server - uuid: 2, length: 44, load: Hi client, I'm get your info - hello server!
+get info from server - uuid: 2, length: 45, load: Hi client, I'm get your info - 北京,你好!
+*/

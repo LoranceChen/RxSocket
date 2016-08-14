@@ -7,7 +7,7 @@ import lorance.rxscoket.session.{ConnectedSocket, ServerEntrance}
 import rx.lang.scala.Observable
 
 /**
-  *
+  * simplest Example
   */
 object NormalServer extends App{
   val server = new ServerEntrance("localhost", 10002)
@@ -38,3 +38,13 @@ object NormalServer extends App{
 
   Thread.currentThread().join()
 }
+/**
+  * OUTPUT:
+Thread-11:1471134131207 - connect - success
+Hi, John, someone connected -
+Hi, Mike, someone connected -
+get info from stream - uuid: 2; length: 13; load: hello server!
+get info from stream - uuid: 2; length: 14; load: 北京,你好!
+from - /127.0.0.1:63962 - info - uuid: 2; length: 13; load: hello server!
+from - /127.0.0.1:63962 - info - uuid: 2; length: 14; load: 北京,你好!
+*/
