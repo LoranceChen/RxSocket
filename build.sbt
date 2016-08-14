@@ -85,7 +85,7 @@ pomExtra in Global :=
       <developer>
         <id>lorancechen</id>
         <name>UnlimitedCode Inc.</name>
-        <url>https://www.scalachan.com/</url>
+        <url>http://www.scalachan.com/</url>
       </developer>
     </developers>
 
