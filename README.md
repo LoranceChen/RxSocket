@@ -26,6 +26,8 @@ Layer, it also allow anyone to redesign Presentation Layer easily.
 ###Dependency
 * [RxScala](https://github.com/ReactiveX/RxScala)
 * [lift-json](https://github.com/lift/lift/tree/master/framework/lift-base/lift-json)
+* Java7 nio
+* Scala 2.11.7
 
 ###Feature
 * do logic with reactive style with `Observable` and `Future`
