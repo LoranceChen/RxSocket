@@ -32,6 +32,7 @@ Layer, it also allow anyone to redesign Presentation Layer easily.
 ###Feature
 * do logic with reactive style with `Observable` and `Future`
 * with RPC stream can get a publish-subscribe socket communicate.
+* Asynchronous & Non-blocking
 
 ###Example
 [simple example in test/demo directory](https://github.com/LoranceChen/RxSocket/tree/master/src/test/scala-2.11/demo)
