@@ -18,7 +18,7 @@ Layer, it also allow anyone to redesign Presentation Layer easily.
 ```
 <dependency>
   <groupId>com.scalachan</groupId>
-  <artifactId>rxsocket</artifactId>
+  <artifactId>rxsocket_2.11</artifactId>
   <version>0.9.7</version>
 </dependency>
 ```
