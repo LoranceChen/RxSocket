@@ -2,19 +2,19 @@ package lorance.rxscoket.session
 
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
-import java.nio.channels.{CompletionHandler, AsynchronousSocketChannel}
-import java.util.concurrent.Semaphore
+import java.nio.channels.{AsynchronousSocketChannel, CompletionHandler}
+import java.util.concurrent.{ConcurrentSkipListSet, Semaphore}
 
 import lorance.rxscoket.dispatch.TaskManager
 import lorance.rxscoket.session.exception.ReadResultNegativeException
 import lorance.rxscoket._
 import lorance.rxscoket.session.implicitpkg._
 import rx.lang.scala.schedulers.ExecutionContextScheduler
-import rx.lang.scala.{Subject, Subscription, Subscriber, Observable}
+import rx.lang.scala.{Observable, Subject, Subscriber, Subscription}
 
 import scala.collection.mutable
 import scala.concurrent.{Future, Promise}
-import scala.util.{Try, Success, Failure}
+import scala.util.{Failure, Success, Try}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 case class AddressPair(local: InetSocketAddress, remote: InetSocketAddress)
@@ -23,10 +23,7 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
                       heartBeatsManager: TaskManager,
                       val addressPair: AddressPair) {
   private val readerDispatch = new ReaderDispatch()
-  private val readSubscribes = mutable.Set[Subscriber[CompletedProto]]()
-
-  private def append(s: Subscriber[CompletedProto]) = readSubscribes.synchronized(readSubscribes += s)
-  private def remove(s: Subscriber[CompletedProto]) = readSubscribes.synchronized(readSubscribes -= s)
+  private val readSubscribes = new ConcurrentSkipListSet[Subscriber[CompletedProto]]()
 
 //  val netMsgCountBuf = new Count()
   private val closeObv = Subject[AddressPair]()
@@ -54,8 +51,8 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
     rxsocketLogger.log(s"beginReading - ", 10)
     beginReading()
     Observable.apply[CompletedProto]({ s =>
-      append(s)
-      s.add(Subscription(remove(s)))
+      readSubscribes.add(s)
+      s.add(Subscription(readSubscribes.remove(s)))
     }).onBackpressureBuffer.
       observeOn(ExecutionContextScheduler(global)).doOnCompleted {
       rxsocketLogger.log("socket reading - doOnCompleted", 10)
@@ -69,10 +66,15 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
           f match {
             case e: ReadResultNegativeException =>
               rxsocketLogger.log(s"$getClass - read finished", 15)
-              for (s <- readSubscribes) { s.onCompleted()}
+              while(readSubscribes.iterator().hasNext) {
+                readSubscribes.iterator().next().onCompleted()
+              }
             case _ =>
               rxsocketLogger.log(s"unhandle exception - $f", 15)
-              for (s <- readSubscribes) { s.onCompleted()} //exception or onCompleted
+              while(readSubscribes.iterator().hasNext) {
+                readSubscribes.iterator().next().onCompleted()
+              }
+//              for (s <- readSubscribes) { s.onCompleted()} //exception or onCompleted
           }
         case Success(c) =>
           val src = c.byteBuffer
@@ -87,8 +89,8 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
                 rxsocketLogger.log(s"dispatched heart beat - $proto", 100, Some("heart-beat"))
                 heart = true
               } else {
-                readSubscribes.foreach { s =>
-                  s.onNext(proto)
+                while(readSubscribes.iterator().hasNext) {
+                  readSubscribes.iterator().next().onNext(proto)
                 }
               }
             }
