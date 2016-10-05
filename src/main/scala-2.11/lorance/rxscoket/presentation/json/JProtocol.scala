@@ -6,8 +6,10 @@ import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 import lorance.rxscoket._
 import lorance.rxscoket.session.{CompletedProto, ConnectedSocket}
 import lorance.rxscoket.session.implicitpkg._
+import net.liftweb.json.Extraction._
 import net.liftweb.json.JsonAST.JValue
-import rx.lang.scala.{Subject, Observable}
+import rx.lang.scala.{Observable, Subject}
+
 import scala.concurrent.duration.Duration
 import net.liftweb.json._
 
@@ -63,6 +65,7 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
     * @tparam Result return json extractable class
     * @return
     */
+  @deprecated("replaced by sendWithRsp")
   def sendWithResult[Result <: IdentityTask, Req <: IdentityTask]
     (any: Req, additional: Option[Observable[Result] => Observable[Result]])
     (implicit mf: Manifest[Result]): Observable[Result] = {
@@ -80,6 +83,39 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
 
     //send msg after prepare stream
     val bytes = JsonParse.enCode(any)
+    connectedSocket.send(ByteBuffer.wrap(bytes))
+
+    resultStream
+  }
+
+  /**
+    * holder taskId inner the method
+    * @param any should be case class
+    */
+  def sendWithStream[Req, Rsp](any: Req,  additional: Option[Observable[Rsp] => Observable[Rsp]])(implicit mf: Manifest[Rsp]) = {
+    val register = Subject[JValue]()
+    val taskId = presentation.getTaskId
+    this.addTask(taskId, register)
+
+    val extract = register.map{s =>
+      val removed = s.removeField{
+        case JField("taskId", _) => true
+        case _          => false
+      }
+//      println("xxxxx - " + removed.extractOpt[Rsp])
+      removed.extractOpt[Rsp]
+    }.filter(_.isDefined).map(_.get)
+    val resultStream = additional.map(_(extract)).getOrElse(extract).
+      timeout(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS)).
+      doOnError { e => rxsocketLogger.log(s"[Throw] JProtocol.taskResult - $any - $e") }.
+      doOnCompleted{
+        this.removeTask(taskId)
+        //        connectedSocket.netMsgCountBuf.dec
+      }
+
+    //send msg after prepare stream
+    val mergeTaskId = decompose(any).merge(JObject(JField("taskId", JString(taskId))))
+    val bytes = JsonParse.enCode(mergeTaskId)
     connectedSocket.send(ByteBuffer.wrap(bytes))
 
     resultStream

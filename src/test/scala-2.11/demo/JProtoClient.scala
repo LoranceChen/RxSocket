@@ -24,9 +24,19 @@ object JProtoClient extends App {
 
   Thread.currentThread().join()
 
+// older api `sendWithResult`
+//  def getMyNames(accountId: String) = {
+//    jproto.flatMap { s =>
+//      val rsp = s.sendWithResult[Response, Request](Request(accountId),
+//        Some((x: Observable[Response]) => x.takeWhile(_.result.nonEmpty))//`takeWhile` marks which point the stream completed
+//      )
+//      toFuture(rsp)
+//    }
+//  }
+
   def getMyNames(accountId: String) = {
     jproto.flatMap { s =>
-      val rsp = s.sendWithResult[Response, Request](Request(accountId),
+      val rsp = s.sendWithStream[Request, Response](Request(accountId),
         Some((x: Observable[Response]) => x.takeWhile(_.result.nonEmpty))//`takeWhile` marks which point the stream completed
       )
       toFuture(rsp)
@@ -50,8 +60,10 @@ object JProtoClient extends App {
     p.future
   }
 
-  case class Request(accountId: String, taskId: String = presentation.getTaskId) extends IdentityTask
-  case class Response(result: Option[String], taskId: String) extends IdentityTask
+//  case class Request(accountId: String, taskId: String = presentation.getTaskId) extends IdentityTask
+//  case class Response(result: Option[String], taskId: String) extends IdentityTask
+  case class Request(accountId: String)
+  case class Response(result: Option[String])
 }
 
 /**

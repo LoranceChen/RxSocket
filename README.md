@@ -72,7 +72,9 @@ v0.9.3
 v0.9.5
 * TimerTask dispatch with message queue to avoid concurrent problem.
 
+v0.9.8
+* Hide taskId. Generate taskId inner `JProtocal.sendWithStream` in order to replace `sendWithResult` method
 ####Roadmap
-* encapsulate taskId because it must be unique.
+* encapsulate taskId because it must be unique. [x]
 * add Model and Service concept to support specify Req an Rsp.
 * split every proto msg(or inner proto data type) with specify notation.
