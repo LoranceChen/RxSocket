@@ -1,4 +1,4 @@
-# RxSocket - v0.9.7
+# RxSocket - v0.9.8
 socket with reactive style.
 
 ## Why do this project
@@ -74,6 +74,7 @@ v0.9.5
 
 v0.9.8
 * Hide taskId. Generate taskId inner `JProtocal.sendWithStream` in order to replace `sendWithResult` method
+
 ####Roadmap
 * encapsulate taskId because it must be unique. [x]
 * add Model and Service concept to support specify Req an Rsp.
