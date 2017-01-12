@@ -1,4 +1,4 @@
-# RxSocket - v0.9.8
+# RxSocket - v0.10.1
 socket with reactive style.
 
 ## Why do this project
@@ -8,18 +8,34 @@ a network data stream.At upper of TCP, I will beginning to complete basic functi
 Layer, it also allow anyone to redesign Presentation Layer easily.
 
 ###SBT Usage
+- Scala 1.12.x
 ```
-"com.scalachan" %% "rxsocket" % "0.9.7"
+"com.scalachan" %% "rxsocket" % "0.10.1"
 //or full name
-"com.scalachan" % "rxsocket_2.11" % "0.9.7"
+"com.scalachan" % "rxsocket_2.11" % "0.10.1"
+```
+- Scala 1.11.x
+```
+"com.scalachan" %% "rxsocket" % "0.9.8"
+//or full name
+"com.scalachan" % "rxsocket_2.11" % "0.9.8"
 ```
 
 ###Maven Usage
+- Scala 1.12.x
+```
+<dependency>
+  <groupId>com.scalachan</groupId>
+  <artifactId>rxsocket_2.12</artifactId>
+  <version>0.10.1</version>
+</dependency>
+```
+- Scala 1.11.x
 ```
 <dependency>
   <groupId>com.scalachan</groupId>
   <artifactId>rxsocket_2.11</artifactId>
-  <version>0.9.7</version>
+  <version>0.9.8</version>
 </dependency>
 ```
 
@@ -27,7 +43,6 @@ Layer, it also allow anyone to redesign Presentation Layer easily.
 * [RxScala](https://github.com/ReactiveX/RxScala)
 * [lift-json](https://github.com/lift/lift/tree/master/framework/lift-base/lift-json)
 * Java7 nio
-* Scala 2.11.7
 
 ###Feature
 * do logic with reactive style with `Observable` and `Future`
@@ -74,6 +89,9 @@ v0.9.5
 
 v0.9.8
 * Hide taskId. Generate taskId inner `JProtocal.sendWithStream` in order to replace `sendWithResult` method
+
+v0.10.1
+* Upgrade Scala Sdk to 1.12.1
 
 ####Roadmap
 * encapsulate taskId because it must be unique. [x]
