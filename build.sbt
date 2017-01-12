@@ -1,12 +1,12 @@
 //import sbt._
 
-version := "0.9.8"
+version := "0.10.1"
 
 name := "rxsocket"
 
 organization := "com.scalachan"
 
-scalaVersion := "2.11.7"
+scalaVersion := "2.12.1"
 
 ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
 
@@ -58,8 +58,8 @@ publishTo <<= version { (v: String) =>
 }
 
 libraryDependencies ++= Seq(
-  "io.reactivex" %% "rxscala" % "0.26.2",
-  "net.liftweb" %% "lift-json" % "3.0-RC3"
+  "io.reactivex" %% "rxscala" % "0.26.5",
+  "net.liftweb" %% "lift-json" % "3.0.1"
 )
 
 //
