@@ -12,7 +12,7 @@ Layer, it also allow anyone to redesign Presentation Layer easily.
 ```
 "com.scalachan" %% "rxsocket" % "0.10.1"
 //or full name
-"com.scalachan" % "rxsocket_2.11" % "0.10.1"
+"com.scalachan" % "rxsocket_2.12" % "0.10.1"
 ```
 - Scala 1.11.x
 ```
