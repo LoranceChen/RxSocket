@@ -85,7 +85,7 @@ class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Config
       }
     }
     tmpProto match {
-      case PaddingProto(None, _, _) =>
+      case PaddingProto(None, _, _) => //not uuid
         val uuidOpt = tryGetByte(src)
         tmpProto = PaddingProto(uuidOpt, None, null)
         val lengthOpt = uuidOpt.flatMap{uuid =>
@@ -117,7 +117,7 @@ class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Config
             if (completes.isEmpty) receiveHelper(src, Some(Vector(completed)))
             else receiveHelper(src, completes.map(_ :+ completed))
         }
-      case padding @ PaddingProto(Some(uuid), None, _) =>
+      case padding @ PaddingProto(Some(uuid), None, _) => //has uuid; not any length data
         val lengthOpt = tryGetLength(src, None)
         val protoOpt = lengthOpt.flatMap {
           case CompletedLength(length) =>
@@ -133,7 +133,7 @@ class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Config
             if (completes.isEmpty) receiveHelper(src, Some(Vector(completed)))
             else receiveHelper(src, completes.map(_ :+ completed))
         }
-      case padding @ PaddingProto(Some(uuid), Some(pending @ PendingLength(arrived, number)), _) =>
+      case padding @ PaddingProto(Some(uuid), Some(pending @ PendingLength(arrived, number)), _) => //has uuid; has apart length data
         val lengthOpt = tryGetLength(src, Some(pending))
         val protoOpt = lengthOpt match { //todo as flatMap
           case Some(length @ CompletedLength(_)) =>
@@ -150,7 +150,7 @@ class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Config
             if (completes.isEmpty) receiveHelper(src, Some(Vector(completed)))
             else receiveHelper(src, completes.map(_ :+ completed))
         }
-      case PaddingProto(Some(uuid), lengthOpt @ Some(CompletedLength(length)), padding) =>
+      case PaddingProto(Some(uuid), lengthOpt @ Some(CompletedLength(length)), padding) => //has uuid; completed length data
         val protoOpt = if (padding.position() + src.remaining() < length) {
           tmpProto = PaddingProto(Some(uuid), lengthOpt, padding.put(src))
           None
