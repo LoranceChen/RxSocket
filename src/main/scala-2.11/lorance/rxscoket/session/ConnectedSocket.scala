@@ -56,7 +56,7 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
     Observable.apply[CompletedProto]({ s =>
       append(s)
       s.add(Subscription(remove(s)))
-    }).onBackpressureBuffer.
+    }).onBackpressureBuffer.//(1000, disconnect). //todo limit BackpressureBuffer and add hook e.g. drop others or disconnect socket
       observeOn(ExecutionContextScheduler(global)).doOnCompleted {
       rxsocketLogger.log("socket reading - doOnCompleted", 10)
     }
