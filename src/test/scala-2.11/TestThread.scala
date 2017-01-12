@@ -39,3 +39,12 @@ object TestThread extends App {
   Thread.sleep(1000)
   awake()
 }
+
+/**
+  * Output
+  * main:1484234888350 - start
+    Thread-0:1484234888356 - sleeping
+    main:1484234891363 - notify
+    main:1484234893365 - main release lcok Lock
+    Thread-0:1484234893366 - waitThread awaked
+  */
