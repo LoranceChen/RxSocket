@@ -93,11 +93,12 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
     resultStream.hot
   }
 
-  def sendWithRsp[Result <: IdentityTask, Req <: IdentityTask]
+  def sendWithRsp[Result, Req]
   (any: Req)
   (implicit mf: Manifest[Result]): Future[Result] = {
     val register = Subject[JValue]()
-    this.addTask(any.taskId, register)
+    val taskId = presentation.getTaskId
+    this.addTask(taskId, register)
 
     val extract = register.map{s => s.extractOpt[Result]}.filter(_.isDefined).map(_.get)
     val resultFur = extract.
@@ -105,8 +106,8 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
       future
 
     resultFur.onComplete({
-      case Failure(ex) => rxsocketLogger.log(s"[Throw] JProtocol.taskResult - ${any.taskId} - $ex")
-      case Success(_) => this.removeTask(any.taskId)
+      case Failure(ex) => rxsocketLogger.log(s"[Throw] JProtocol.taskResult - ${taskId} - $ex")
+      case Success(_) => this.removeTask(taskId)
     })
 
     //send msg after prepare stream
@@ -154,27 +155,27 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
     * @tparam Req should be case class
     * @return
     */
-  private def sendWithResult2[Result, Req](any: Req)
-  (implicit mf: Manifest[Result]): Observable[Result] = {
-    val register = Subject[JValue]()
-    val taskId = presentation.getTaskId
-    this.addTask(taskId, register)
-
-    case class ResultWithTaskId(result: Option[Result], taskId: String)
-    val extract = register.map{s => s.extractOpt[ResultWithTaskId]}.filter(_.isDefined).map(_.get)
-    val resultStream = extract.takeWhile(_.result.nonEmpty).map(_.result.get).
-      timeout(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS)).
-      doOnError { e => rxsocketLogger.log(s"[Throw] JProtocol.taskResult - $any - $e") }.
-      doOnCompleted{
-        this.removeTask(taskId)
-      }
-
-    //send msg after prepare stream
-    val bytes = JsonParse.enCode(any)
-    connectedSocket.send(ByteBuffer.wrap(bytes))
-
-    resultStream.hot
-  }
+//  private def sendWithResult2[Result, Req](any: Req)
+//  (implicit mf: Manifest[Result]): Observable[Result] = {
+//    val register = Subject[JValue]()
+//    val taskId = presentation.getTaskId
+//    this.addTask(taskId, register)
+//
+//    case class ResultWithTaskId(result: Option[Result], taskId: String)
+//    val extract = register.map{s => s.extractOpt[ResultWithTaskId]}.filter(_.isDefined).map(_.get)
+//    val resultStream = extract.takeWhile(_.result.nonEmpty).map(_.result.get).
+//      timeout(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS)).
+//      doOnError { e => rxsocketLogger.log(s"[Throw] JProtocol.taskResult - $any - $e") }.
+//      doOnCompleted{
+//        this.removeTask(taskId)
+//      }
+//
+//    //send msg after prepare stream
+//    val bytes = JsonParse.enCode(any)
+//    connectedSocket.send(ByteBuffer.wrap(bytes))
+//
+//    resultStream.hot
+//  }
 
 //  private val serviceModel = mutable.HashMap[String, JValue => Unit]()
 //  def addService(taskId: String, taskStream: JValue => Unit) = serviceModel.synchronized(serviceModel.+=(taskId -> taskStream))
