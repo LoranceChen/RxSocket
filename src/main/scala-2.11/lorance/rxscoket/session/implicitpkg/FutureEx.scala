@@ -1,7 +1,9 @@
 package lorance.rxscoket.session.implicitpkg
 
 import lorance.rxscoket.rxsocketLogger
-import scala.concurrent.{Promise, ExecutionContext, Future, blocking}
+
+import scala.concurrent.duration.Duration
+import scala.concurrent.{ExecutionContext, Future, Promise, blocking}
 
 sealed class FutureTimeoutException extends RuntimeException
 sealed class FutureTimeoutNotOccur extends RuntimeException
@@ -20,4 +22,6 @@ class FutureEx[T](f: Future[T]) {
     }
     p.future
   }))
+
+  def withTimeout(duration: Duration)(implicit executor: ExecutionContext): Future[T] = withTimeout(duration.toMillis)
 }
