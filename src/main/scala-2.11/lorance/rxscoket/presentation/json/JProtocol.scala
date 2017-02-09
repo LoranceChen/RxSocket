@@ -12,6 +12,12 @@ import rx.lang.scala.{Observable, Subject}
 
 import scala.concurrent.duration.Duration
 import net.liftweb.json._
+import lorance.rxscoket.`implicit`.ObvsevableImplicit._
+
+import scala.concurrent.Future
+import scala.util.{Failure, Success}
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * create a JProtocol to dispatch all json relate info bind with socket and it's read stream
@@ -65,7 +71,7 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
     * @tparam Result return json extractable class
     * @return
     */
-  @deprecated("replaced by sendWithRsp")
+  @deprecated("replaced by sendWithStream")
   def sendWithResult[Result <: IdentityTask, Req <: IdentityTask]
     (any: Req, additional: Option[Observable[Result] => Observable[Result]])
     (implicit mf: Manifest[Result]): Observable[Result] = {
@@ -78,21 +84,42 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
       doOnError { e => rxsocketLogger.log(s"[Throw] JProtocol.taskResult - ${any.taskId} - $e") }.
       doOnCompleted{
         this.removeTask(any.taskId)
-//        connectedSocket.netMsgCountBuf.dec
       }
 
     //send msg after prepare stream
     val bytes = JsonParse.enCode(any)
     connectedSocket.send(ByteBuffer.wrap(bytes))
 
-    resultStream
+    resultStream.hot
   }
 
+  def sendWithRsp[Result <: IdentityTask, Req <: IdentityTask]
+  (any: Req)
+  (implicit mf: Manifest[Result]): Future[Result] = {
+    val register = Subject[JValue]()
+    this.addTask(any.taskId, register)
+
+    val extract = register.map{s => s.extractOpt[Result]}.filter(_.isDefined).map(_.get)
+    val resultFur = extract.
+      timeout(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS)).
+      future
+
+    resultFur.onComplete({
+      case Failure(ex) => rxsocketLogger.log(s"[Throw] JProtocol.taskResult - ${any.taskId} - $ex")
+      case Success(_) => this.removeTask(any.taskId)
+    })
+
+    //send msg after prepare stream
+    val bytes = JsonParse.enCode(any)
+    connectedSocket.send(ByteBuffer.wrap(bytes))
+
+    resultFur
+  }
   /**
     * holder taskId inner the method
     * @param any should be case class
     */
-  def sendWithStream[Req, Rsp](any: Req,  additional: Option[Observable[Rsp] => Observable[Rsp]])(implicit mf: Manifest[Rsp]) = {
+  def sendWithStream[Req, Rsp](any: Req, additional: Option[Observable[Rsp] => Observable[Rsp]])(implicit mf: Manifest[Rsp]) = {
     val register = Subject[JValue]()
     val taskId = presentation.getTaskId
     this.addTask(taskId, register)
@@ -102,7 +129,6 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
         case JField("taskId", _) => true
         case _          => false
       }
-//      println("xxxxx - " + removed.extractOpt[Rsp])
       removed.extractOpt[Rsp]
     }.filter(_.isDefined).map(_.get)
     val resultStream = additional.map(_(extract)).getOrElse(extract).
@@ -118,7 +144,7 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
     val bytes = JsonParse.enCode(mergeTaskId)
     connectedSocket.send(ByteBuffer.wrap(bytes))
 
-    resultStream
+    resultStream.hot
   }
 
   /**
@@ -147,7 +173,7 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
     val bytes = JsonParse.enCode(any)
     connectedSocket.send(ByteBuffer.wrap(bytes))
 
-    resultStream
+    resultStream.hot
   }
 
 //  private val serviceModel = mutable.HashMap[String, JValue => Unit]()
