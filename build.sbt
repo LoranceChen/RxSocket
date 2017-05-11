@@ -28,11 +28,6 @@ pgpSecretRing := file(Path.userHome + "/.sbt/gpg/secring.asc")
 
 pgpPublicRing := file(Path.userHome + "/.sbt/gpg/pubring.asc")
 
-//credentials += Credentials("Sonatype Nexus",
-//  "localhost:7070",
-//  "admin",
-//  "admin123")
-
 publishArtifact in (Compile, packageDoc) := true
 
 resolvers ++= Seq(
