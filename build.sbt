@@ -6,7 +6,7 @@ name := "rxsocket"
 
 organization := "com.scalachan"
 
-scalaVersion := "2.12.1"
+scalaVersion := "2.12.2"
 
 ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
 
