@@ -7,7 +7,7 @@ import java.nio.charset.StandardCharsets
   * extends ByteBuffer for get string by Length-Data protocol
   */
 class ByteBufferEx(byteBuffer: ByteBuffer) {
-  @deprecated("json socket project not use prefix length flag")
+  @deprecated("json socket project not use prefix length flag", "0.10.1")
   def getStringWithPrefixLength = {
     val length = byteBuffer.getInt()
     getString(length)
@@ -33,7 +33,7 @@ class ByteBufferEx(byteBuffer: ByteBuffer) {
    * 未读部分的长度
     *
    */
-  @deprecated("use remaining")
+  @deprecated("use remaining", "0.10.1")
   def unReadLength = {
     byteBuffer.limit() - byteBuffer.position()
   }

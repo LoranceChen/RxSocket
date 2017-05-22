@@ -17,7 +17,8 @@ sonatypeProfileName := "com.scalachan"
 scalacOptions ++= Seq(
   "-deprecation",
   "-feature",
-  "-language:postfixOps"
+  "-language:postfixOps",
+  "-language:implicitConversions"
 )
 
 //exportJars := true

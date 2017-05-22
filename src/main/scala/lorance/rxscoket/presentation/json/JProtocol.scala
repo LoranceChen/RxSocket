@@ -71,7 +71,7 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
     * @tparam Result return json extractable class
     * @return
     */
-  @deprecated("replaced by sendWithStream")
+  @deprecated("replaced by sendWithStream", "0.10.1")
   def sendWithResult[Result <: IdentityTask, Req <: IdentityTask]
     (any: Req, additional: Option[Observable[Result] => Observable[Result]])
     (implicit mf: Manifest[Result]): Observable[Result] = {
