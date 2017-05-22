@@ -47,7 +47,8 @@ Reactive programming has a important concept of stream which allow application s
 * Asynchronous & Non-blocking
 
 ### Example
-[simple example in test/demo directory](https://github.com/LoranceChen/RxSocket/tree/master/src/test/scala-2.11/demo)
+[simple example in test/demo directory](https://github.com/LoranceChen/RxSocket/tree/master/src/test/scala/demo)
+[benchmark](https://github.com/LoranceChen/RxSocket/tree/master/src/test/scala/benchmark)
 
 #### Roadmap
 * encapsulate taskId because it must be unique. [x]
