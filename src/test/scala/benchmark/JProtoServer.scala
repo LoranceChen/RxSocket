@@ -1,8 +1,8 @@
-package jproto
+package benchmark
 
 import lorance.rxscoket._
 import lorance.rxscoket.presentation.json.{IdentityTask, JProtocol}
-import lorance.rxscoket.session.{Configration, ServerEntrance}
+import lorance.rxscoket.session.ServerEntrance
 import net.liftweb.json.JsonAST.JObject
 
 object JProtoServer extends App {

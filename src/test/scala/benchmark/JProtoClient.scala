@@ -1,13 +1,13 @@
-package jproto
+package benchmark
 
 import lorance.rxscoket._
-import lorance.rxscoket.presentation.json.{JProtocol, IdentityTask}
+import lorance.rxscoket.presentation.json.JProtocol
 import lorance.rxscoket.session.ClientEntrance
 import rx.lang.scala.Observable
 
-import scala.concurrent.{Promise, Future}
-import scala.util.{Success, Failure}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Future, Promise}
+import scala.util.{Failure, Success}
 
 object JProtoClient extends App {
   val count = new Count()
