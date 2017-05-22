@@ -11,5 +11,5 @@ package object presentation {
     nanoTime + "-" + threadId
   }
 
-  var JPROTO_TIMEOUT = 8 //seconds
+  var JPROTO_TIMEOUT = 30 //seconds
 }
