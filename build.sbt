@@ -14,6 +14,12 @@ overridePublishSettings
 
 sonatypeProfileName := "com.scalachan"
 
+scalacOptions ++= Seq(
+  "-deprecation",
+  "-feature",
+  "-language:postfixOps"
+)
+
 //exportJars := true
 enablePlugins(SignedAetherPlugin)
 //
