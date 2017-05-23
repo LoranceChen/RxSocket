@@ -43,7 +43,7 @@ Reactive programming has a important concept of stream which allow application s
 
 ### Feature
 * do logic with reactive style with `Observable` and `Future`
-* with RPC stream can get a publish-subscribe socket communicate.
+* with RPC stream can get a pipe-like socket communicate.
 * Asynchronous & Non-blocking
 
 ### Example
