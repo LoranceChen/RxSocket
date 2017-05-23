@@ -1,5 +1,3 @@
-//import sbt._
-
 version := "0.10.1"
 
 name := "rxsocket"
