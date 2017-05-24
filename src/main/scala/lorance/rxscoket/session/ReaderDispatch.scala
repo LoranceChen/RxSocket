@@ -170,6 +170,8 @@ class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Config
             if (completes.isEmpty) receiveHelper(src, Some(Vector(completed)))
             else receiveHelper(src, completes.map(_ :+ completed))
         }
+      case _ =>
+        throw ProtoParseError("can arrive")
     }
   }
 }
@@ -187,3 +189,5 @@ case class CompletedProto(uuid: Byte,length: Int, loaded: ByteBuffer) extends Bu
 abstract class BufferedLength{def value: Int}
 case class PendingLength(arrived: Array[Byte], var arrivedNumber: Int) extends BufferedLength{def value = throw new Exception("length not completed")}
 case class CompletedLength(length: Int) extends BufferedLength{def value = length}
+
+case class ProtoParseError(msg: String) extends Exception(msg)
