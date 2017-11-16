@@ -5,13 +5,13 @@ socket with reactive style.
 Reactive programming has a important concept of stream which allow application scale vertically and apply good multi-thread dispatch for concurrent event.Network programming is designed as many layer for different data types. It's nature and useful if use Reactive Style to implement network data stream.At upper of TCP, the library complete a basic function of Session Layer and Json Presentation Layer, it also allow anyone to redesign Presentation Layer easily.
 
 ### SBT Usage
-- Scala 1.12.x
+- Scala 2.12.x
 ```
 "com.scalachan" %% "rxsocket" % "0.10.1"
 //or full name
 "com.scalachan" % "rxsocket_2.12" % "0.10.1"
 ```
-- Scala 1.11.x
+- Scala 2.11.x
 ```
 "com.scalachan" %% "rxsocket" % "0.9.8"
 //or full name
@@ -19,7 +19,7 @@ Reactive programming has a important concept of stream which allow application s
 ```
 
 ### Maven Usage
-- Scala 1.12.x
+- Scala 2.12.x
 ```
 <dependency>
   <groupId>com.scalachan</groupId>
@@ -27,7 +27,7 @@ Reactive programming has a important concept of stream which allow application s
   <version>0.10.1</version>
 </dependency>
 ```
-- Scala 1.11.x
+- Scala 2.11.x
 ```
 <dependency>
   <groupId>com.scalachan</groupId>
