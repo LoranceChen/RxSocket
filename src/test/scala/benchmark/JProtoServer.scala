@@ -1,13 +1,12 @@
 package benchmark
 
-import lorance.rxscoket._
-import lorance.rxscoket.presentation.json.{IdentityTask, JProtocol}
-import lorance.rxscoket.session.ServerEntrance
-import net.liftweb.json.JsonAST.JObject
+import lorance.rxsocket.presentation.json.{IdentityTask, JProtocol}
+import lorance.rxsocket.session.ServerEntrance
+import org.json4s.JObject
+import org.slf4j.LoggerFactory
 
 object JProtoServer extends App {
-  rxsocketLogger.logLevel = 1
-  rxsocketLogger.logAim ++= List[String]("send completed", "read success", "dispatch-protos")
+  val logger = LoggerFactory.getLogger(getClass)
 
   val conntected = new ServerEntrance("127.0.0.1", 10011).listen
   val readX = conntected.map(c => (c, c.startReading))

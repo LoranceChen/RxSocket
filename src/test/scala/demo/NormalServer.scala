@@ -2,8 +2,8 @@ package demo
 
 import java.nio.ByteBuffer
 
-import lorance.rxscoket._
-import lorance.rxscoket.session.{ConnectedSocket, ServerEntrance}
+import lorance.rxsocket._
+import lorance.rxsocket.session.{ConnectedSocket, ServerEntrance}
 import rx.lang.scala.Observable
 
 /**

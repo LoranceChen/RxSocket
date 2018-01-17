@@ -1,13 +1,14 @@
 package demo
 
-import lorance.rxscoket.presentation.json.{IdentityTask, JProtocol}
-import lorance.rxscoket.session.ServerEntrance
-import net.liftweb.json.JsonAST.JString
+import lorance.rxsocket.presentation.json.{IdentityTask, JProtocol}
+import lorance.rxsocket.session.ServerEntrance
+import org.json4s.JsonAST.JString
+import org.json4s.native.JsonMethods._
 
 /**
   * Json presentation Example
   */
-object JProtoServer extends App{
+object JProtoServer extends App {
   val socket = new ServerEntrance("127.0.0.1", 10011).listen
 
   val jprotoSocket = socket.map(connection => new JProtocol(connection, connection.startReading))
@@ -16,7 +17,8 @@ object JProtoServer extends App{
 
   jprotoSocket.subscribe ( s =>
     s.jRead.subscribe{ j =>
-      println(s"GET_INFO - ${net.liftweb.json.compactRender(j)}")
+      println(s"GET_INFO - ${ compact(render(j))}")
+      Thread.sleep(1000)
       val JString(tskId) = j \ "taskId" //assume has taskId for simplify
       //send multiple msg with same taskId as a stream
       s.send(Response(Some("foo"), tskId))

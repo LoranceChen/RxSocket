@@ -1,26 +1,23 @@
 package demo
 
-import lorance.rxscoket._
-import lorance.rxscoket.presentation.json.{JProtocol, IdentityTask}
-import lorance.rxscoket.session.ClientEntrance
+import lorance.rxsocket._
+import lorance.rxsocket.presentation.json.{IdentityTask, JProtocol}
+import lorance.rxsocket.session.ClientEntrance
 import rx.lang.scala.Observable
 
-import scala.concurrent.{Promise, Future}
-
+import scala.concurrent.{Future, Promise}
 import scala.concurrent.ExecutionContext.Implicits.global
-import lorance.rxscoket.presentation
 
 /**
   * Json presentation Example
   */
 object JProtoClient extends App {
-
   val client = new ClientEntrance("localhost", 10011).connect
   val jproto = client.map { x => new JProtocol(x, x.startReading) }
 
   val namesFur = getMyNames("admin")
 
-  namesFur.foreach(names => rxsocketLogger.log(names))
+  namesFur.foreach(names => println(names.toString))
 
   Thread.currentThread().join()
 

@@ -1,10 +1,10 @@
 version := "0.10.1"
 
-name := "rxsocket"
+name := "lorance/rxsocket"
 
 organization := "com.scalachan"
 
-scalaVersion := "2.12.2"
+scalaVersion := "2.12.4"
 
 ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
 
@@ -59,7 +59,12 @@ publishTo <<= version { (v: String) =>
 
 libraryDependencies ++= Seq(
   "io.reactivex" %% "rxscala" % "0.26.5",
-  "net.liftweb" %% "lift-json" % "3.0.1"
+  "org.json4s" %% "json4s-native" % "3.6.0-M1",
+  "org.slf4j" % "slf4j-api" % "1.7.25",
+  "ch.qos.logback" % "logback-classic" % "1.2.3" % Test,
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2",
+  "junit" % "junit" % "4.12" % Test,
+
 )
 
 //
@@ -88,4 +93,3 @@ pomExtra in Global :=
         <url>http://www.scalachan.com/</url>
       </developer>
     </developers>
-

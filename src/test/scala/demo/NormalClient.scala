@@ -1,7 +1,7 @@
 package demo
 
 import java.nio.ByteBuffer
-import lorance.rxscoket.session._
+import lorance.rxsocket.session._
 import rx.lang.scala.Observable
 import scala.concurrent.ExecutionContext.Implicits.global
 
