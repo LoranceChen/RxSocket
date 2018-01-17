@@ -4,46 +4,36 @@ import java.net.InetSocketAddress
 import java.nio.channels.{AsynchronousServerSocketChannel, AsynchronousSocketChannel, CompletionHandler}
 
 import org.slf4j.LoggerFactory
-import lorance.rxsocket._
 import lorance.rxsocket.dispatch.{TaskKey, TaskManager}
-import rx.lang.scala.{Observable, Subscriber, Subscription}
+import rx.lang.scala.{Observable, Subject}
 
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.collection.mutable
-//import minimo.rxscoket.session.execution.currentThread
 
 class ServerEntrance(host: String, port: Int) {
   private val logger = LoggerFactory.getLogger(getClass)
 
-  private val connectionSubs = mutable.Set[Subscriber[ConnectedSocket]]()
-  private def append(s: Subscriber[ConnectedSocket]) = connectionSubs.synchronized(connectionSubs += s)
-  private def remove(s: Subscriber[ConnectedSocket]) = connectionSubs.synchronized(connectionSubs -= s)
-//  private val heatBeats = new HeartBeats()
+  private val connectionSubs = Subject[ConnectedSocket]()
+  val socketAddress: InetSocketAddress = new InetSocketAddress(host, port)
+
   val server: AsynchronousServerSocketChannel = {
     val server = AsynchronousServerSocketChannel.open
-    val socketAddress: InetSocketAddress = new InetSocketAddress(host, port)
     val prepared = server.bind(socketAddress)
-    logger.trace(s"Server is prepare listen at - $socketAddress")
+    logger.info(s"server is bind at - $socketAddress")
     prepared
   }
 
   private val heatBeatsManager = new TaskManager()
+
   /**
     * listen connection and emit every times connects event.
     */
   def listen: Observable[ConnectedSocket] = {
-    logger.trace("listen begin - ")
+    logger.info(s"server start listening at - $socketAddress")
     connectForever()
 
-    val connected = Observable.apply[ConnectedSocket]({ s =>
-      append(s)
-      s.add(Subscription(remove(s)))
-    }).doOnCompleted {
-      logger.info("socket connection - doOnCompleted")
-    }
-    connected
+    connectionSubs
   }
 
   private def connectForever() = {
@@ -53,11 +43,11 @@ class ServerEntrance(host: String, port: Int) {
     def connectForeverHelper(f: Future[AsynchronousSocketChannel]): Unit = {
       f.onComplete {
         case Failure(e) =>
-          for(s <- connectionSubs) {s.onError(e)}
+          logger.warn("connection set up fail", e)
         case Success(c) =>
           val connectedSocket = new ConnectedSocket(c, heatBeatsManager,
             AddressPair(c.getLocalAddress.asInstanceOf[InetSocketAddress], c.getRemoteAddress.asInstanceOf[InetSocketAddress]))
-          logger.trace(s"client connected - ${connectedSocket.addressPair.remote}")
+          logger.info(s"client connected - ${connectedSocket.addressPair.remote}")
 
           val sendHeartTask = new HeartBeatSendTask(
             TaskKey(connectedSocket.addressPair.remote + ".SendHeartBeat", System.currentTimeMillis() + Configration.SEND_HEART_BEAT_BREAKTIME * 1000L),
@@ -74,7 +64,8 @@ class ServerEntrance(host: String, port: Int) {
           heatBeatsManager.addTask(sendHeartTask)
           heatBeatsManager.addTask(checkHeartTask)
 
-          for(s <- connectionSubs) {s.onNext(connectedSocket)}
+          connectionSubs.onNext(connectedSocket)
+
           val nextConn = connection(server)
           connectForeverHelper(nextConn)
       }
@@ -86,11 +77,11 @@ class ServerEntrance(host: String, port: Int) {
     val p = Promise[AsynchronousSocketChannel]
     val callback = new CompletionHandler[AsynchronousSocketChannel, AsynchronousServerSocketChannel] {
       override def completed(result: AsynchronousSocketChannel, attachment: AsynchronousServerSocketChannel): Unit = {
-        logger.trace("connect - success")
+        logger.trace("connect success on callback")
         p.trySuccess(result)
       }
       override def failed(exc: Throwable, attachment: AsynchronousServerSocketChannel): Unit = {
-        logger.error("connect - failed", exc)
+        logger.error("connect failed on callback", exc)
         p.tryFailure(exc)
       }
     }
