@@ -47,41 +47,57 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
   }
 
   /**
+    * two module support:
+    * 1. has type field:
     * this subscription distinct different JProtocols with type field.
     * type == once: response message only once
     * type == stream: response message multi-times.
     *
+    * 2. not type field
+    * use simple dispatch mode
+    *
+    * TODO: this place should be scalable.
     */
   jRead.subscribe{jsonRsp =>
     try{
+      logger.debug(s"jRead get msg: ${compact(render(jsonRsp))}")
+
       val JString(taskId) = jsonRsp \ "taskId"
-      val JString(typ) = jsonRsp \ "type"
-      typ match {
-        case "once" =>
-          val load = jsonRsp \ "load"
+      jsonRsp \ "type" match {
+        case JNothing =>
           val subj = this.getTask(taskId)
-          subj.foreach{ sub =>
-            logger.debug("read jprotocol - {}", compact(render(jsonRsp)))
-            sub.onNext(load)
+          subj.foreach{
+            _.onNext(jsonRsp)
           }
-          removeTask(taskId)
-        case "stream" =>
-          val load = jsonRsp \ "load"
-          val JBool(isCompleted) = jsonRsp \ "isCompleted"
-          val subj = this.getTask(taskId)
-          subj.foreach{ sub =>
-            logger.debug(s"${compact(render(jsonRsp))}")
-            sub.onNext(load)
+        case JString(typ) =>
+          typ match {
+            case "once" =>
+              val load = jsonRsp \ "load"
+              val subj = this.getTask(taskId)
+              subj.foreach{ sub =>
+                sub.onNext(load)
+              }
+              removeTask(taskId)
+            case "stream" =>
+              val load = jsonRsp \ "load"
+              val JBool(isCompleted) = jsonRsp \ "isCompleted"
+              val subj = this.getTask(taskId)
+              subj.foreach{ sub =>
+                sub.onNext(load)
+              }
+              if(isCompleted) removeTask(taskId)
+            case otherTyp =>
+              logger.warn(s"un known type $otherTyp in json result: ${compact(render(jsonRsp))}")
           }
-          if(isCompleted) removeTask(taskId)
       }
 
-
-      logger.debug(s"${compact(render(jsonRsp))}")
     } catch {
-      case NonFatal(e)=> Unit
+      case NonFatal(e)=>
+        logger.warn(s"jread fail: ${compact(render(jsonRsp))} - ", e)
+        Unit
     }
   }
+
 
   def send(any: Any) = {
     val bytes = JsonParse.enCode(any)

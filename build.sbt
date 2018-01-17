@@ -63,7 +63,7 @@ libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % "1.7.25",
   "ch.qos.logback" % "logback-classic" % "1.2.3" % Test,
   "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2",
-  "junit" % "junit" % "4.12" % Test,
+  "junit" % "junit" % "4.12" % Test
 
 )
 
