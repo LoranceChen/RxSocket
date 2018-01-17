@@ -1,10 +1,11 @@
-version := "0.10.1"
+version := "0.11.0"
 
 name := "rxsocket"
 
 organization := "com.scalachan"
 
 scalaVersion := "2.12.4"
+crossScalaVersions := Seq("2.12.4", "2.11.12", "2.10.7")
 
 scalacOptions ++= Seq(
   "-deprecation",
@@ -32,10 +33,9 @@ publishTo := {
 
 libraryDependencies ++= Seq(
   "io.reactivex" %% "rxscala" % "0.26.5",
-  "org.json4s" %% "json4s-native" % "3.6.0-M1",
+  "org.json4s" %% "json4s-native" % "3.6.0-M2",
   "org.slf4j" % "slf4j-api" % "1.7.25",
   "ch.qos.logback" % "logback-classic" % "1.2.3" % Test,
-  "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2",
   "junit" % "junit" % "4.12" % Test,
 
 )
