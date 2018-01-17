@@ -80,14 +80,31 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
               removeTask(taskId)
             case "stream" =>
               val load = jsonRsp \ "load"
-              val JBool(isCompleted) = jsonRsp \ "isCompleted"
-              val subj = this.getTask(taskId)
-              subj.foreach{ sub =>
-                sub.onNext(load)
+              jsonRsp \ "status" match {
+                case JString("end") =>
+                  val subj = this.getTask(taskId)
+                  subj.foreach{ sub =>
+                    removeTask(taskId)
+                    sub.onCompleted()
+                  }
+                case JString("on") =>
+                  val subj = this.getTask(taskId)
+                  subj.foreach{ sub =>
+                    sub.onNext(load)
+                  }
+                case JString("error") =>
+                  val subj = this.getTask(taskId)
+                  subj.foreach{ sub =>
+                    removeTask(taskId)
+                    sub.onError(StreamOccurredFail(compact(render(load))))
+                  }
+
+                case unknown =>
+                  logger.warn(s"get unknown jproto status: $unknown in json result: ${compact(render(jsonRsp))}")
               }
-              if(isCompleted) removeTask(taskId)
+
             case otherTyp =>
-              logger.warn(s"un known type $otherTyp in json result: ${compact(render(jsonRsp))}")
+              logger.warn(s"un known jproto type $otherTyp in json result: ${compact(render(jsonRsp))}")
           }
       }
 
@@ -148,8 +165,9 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
   /**
     * holder taskId inner the method
     * @param any should be case class
+    * @param additional complete the stream ahead of time
     */
-  def sendWithStream[Req, Rsp](any: Req, additional: Option[Observable[Rsp] => Observable[Rsp]])(implicit mf: Manifest[Rsp]) = {
+  def sendWithStream[Req, Rsp](any: Req, additional: Option[Observable[Rsp] => Observable[Rsp]] = None)(implicit mf: Manifest[Rsp]) = {
     val register = Subject[JValue]()
     val taskId = presentation.getTaskId
     this.addTask(taskId, register)
@@ -176,3 +194,5 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
   }
 
 }
+
+case class StreamOccurredFail(msg: String) extends RuntimeException
