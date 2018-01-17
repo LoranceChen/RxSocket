@@ -3,7 +3,7 @@ package lorance.rxsocket.session.exception
 /**
   * UUID use 0x1000000L ~ 0x1000,00ffL
   */
-class SessionException(msg: String) extends Throwable(msg)
+class SessionException(msg: String) extends RuntimeException(msg)
 
 class ReadByteBufferException(msg: String) extends SessionException(msg)
 
