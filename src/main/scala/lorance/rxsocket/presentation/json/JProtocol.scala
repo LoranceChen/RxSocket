@@ -104,8 +104,11 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
               }
 
             case otherTyp =>
-              logger.warn(s"un known jproto type $otherTyp in json result: ${compact(render(jsonRsp))}")
+              logger.warn(s"un known jproto string type $otherTyp in json result: ${compact(render(jsonRsp))}")
           }
+        case otherType =>
+          logger.warn(s"un known jproto JValue type $otherType in json result: ${compact(render(jsonRsp))}")
+
       }
 
     } catch {
