@@ -16,6 +16,7 @@ import rx.lang.scala.{Observable, Subject}
 
 import scala.concurrent.duration.Duration
 import lorance.rxsocket.`implicit`.ObvsevableImplicit._
+import rx.lang.scala.subjects.PublishSubject
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -63,6 +64,14 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
       logger.debug(s"jRead get msg: ${compact(render(jsonRsp))}")
 
       val JString(taskId) = jsonRsp \ "taskId"
+
+      /**
+        * TODO: consider moving "type"'s logic to `sendWithRsp` or `sendWithStream`,
+        *       because this code block shouldn't care about how to deal with single
+        *       or stream result.It handle taskId is OK.
+        *       On the other hand, `tasks` should remove the place where it was added,
+        *       so `sendWithRsp` or `sendWithStream` is the place to add and remove.
+        */
       jsonRsp \ "type" match {
         case JNothing =>
           val subj = this.getTask(taskId)
@@ -141,7 +150,7 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
   def sendWithRsp[Req, Rsp]
   (any: Req)
   (implicit mf: Manifest[Rsp]): Future[Rsp] = {
-    val register = Subject[JValue]()
+    val register = Subject[JValue]
     val taskId = presentation.getTaskId
     this.addTask(taskId, register)
 
@@ -175,14 +184,17 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
     val taskId = presentation.getTaskId
     this.addTask(taskId, register)
 
-    val extract = register.map{load =>
+    val extract = register
+      .map{load =>
       load.extract[Rsp]
     }
 
-    val resultStream = additional.map(_(extract)).getOrElse(extract).
-      timeout(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS)).
-      doOnError { e => logger.error(s"[Throw] JProtocol.taskResult - $any", e) }.
-      doOnCompleted{
+    val resultStream = additional.map(f => f(extract)).getOrElse(extract)
+      .timeout(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS))
+      .map(x => {println("xxx -lll");x})
+      .doOnError { e => logger.error(s"[Throw] JProtocol.taskResult - $any", e) }
+      .doOnCompleted{
+        println("do remove - ")
         this.removeTask(taskId)
       }
 
@@ -193,7 +205,9 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
     val bytes = JsonParse.enCode(mergeTaskId)
     connectedSocket.send(ByteBuffer.wrap(bytes))
 
-    resultStream.hot
+    resultStream
+      //.map(x => {println("hot obv test");x})
+      .share
   }
 
 }

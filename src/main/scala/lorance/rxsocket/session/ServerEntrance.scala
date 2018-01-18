@@ -14,7 +14,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class ServerEntrance(host: String, port: Int) {
   private val logger = LoggerFactory.getLogger(getClass)
 
-  private val connectionSubs = Subject[ConnectedSocket]()
+  private val connectionSubs = Subject[ConnectedSocket]
+
   val socketAddress: InetSocketAddress = new InetSocketAddress(host, port)
 
   val server: AsynchronousServerSocketChannel = {
@@ -33,7 +34,9 @@ class ServerEntrance(host: String, port: Int) {
     logger.info(s"server start listening at - $socketAddress")
     connectForever()
 
-    connectionSubs
+    val hot = connectionSubs.publish
+    hot.connect
+    hot
   }
 
   private def connectForever() = {

@@ -26,12 +26,8 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
   private val logger = LoggerFactory.getLogger(getClass)
 
   private val readerDispatch = new ReaderDispatch()
-  private val readSubscribes = mutable.Set[Subscriber[CompletedProto]]()
+  private val readSubscribes = Subject[CompletedProto]
 
-  private def append(s: Subscriber[CompletedProto]) = readSubscribes.synchronized(readSubscribes += s)
-  private def remove(s: Subscriber[CompletedProto]) = readSubscribes.synchronized(readSubscribes -= s)
-
-//  val netMsgCountBuf = new Count()
   private val closeObv = Subject[AddressPair]()
   private val readAttach = Attachment(ByteBuffer.allocate(Configration.READBUFFER_LIMIT), socketChannel)
 
@@ -56,13 +52,12 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
     logger.debug(s"beginReading - ")
 
     beginReading()
-    Observable.apply[CompletedProto]({ s =>
-      append(s)
-      s.add(Subscription(remove(s)))
-    }).onBackpressureBuffer.//(1000, disconnect). //todo limit BackpressureBuffer and add hook e.g. drop others or disconnect socket
-      observeOn(ExecutionContextScheduler(global)).doOnCompleted {
-      logger.trace("socket reading - doOnCompleted")
-    }
+
+    //todo handle back pressure buffer with more controller
+    readSubscribes
+      .onBackpressureBuffer
+      .doOnCompleted(() => logger.debug("reading completed"))
+      .doOnError(e => logger.warn("reading completed with error - ", e))
   }
 
   private def beginReading() = {
@@ -72,14 +67,17 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
           f match {
             case e: ReadResultNegativeException =>
               logger.debug(s"read finished")
-              for (s <- readSubscribes) { s.onCompleted()}
+              readSubscribes.onCompleted()
+//              for (s <- readSubscribes) { s.onCompleted()}
             case e =>
               logger.error(s"unhandle exception - $f")
-              for (s <- readSubscribes) { s.onCompleted()} //exception or onCompleted
+              //unexpected disconnect also seems as normal completed
+              readSubscribes.onCompleted()
+            //              for (s <- readSubscribes) { s.onCompleted()} //exception or onCompleted
           }
         case Success(c) =>
           val src = c.byteBuffer
-          logger.trace(s"${src.position} bytes")
+          logger.trace(s"read position: ${src.position} bytes")
           readerDispatch.receive(src).foreach{protos =>
             logger.trace(s"dispatched protos - ${protos.map(p => p.loaded.array().string)}")
             protos.foreach{proto =>
@@ -90,9 +88,10 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
                 logger.trace(s"dispatched heart beat - $proto")
                 heart = true
               } else {
-                readSubscribes.foreach { s =>
-                  s.onNext(proto)
-                }
+                readSubscribes.onNext(proto)
+//                readSubscribes.foreach { s =>
+//                  s.onNext(proto)
+//                }
               }
             }
           }
@@ -117,7 +116,7 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
     val p = Promise[Unit]
 
     writeSemaphore.acquire()
-    logger.trace(s"ConnectedSocket send - {}", session.deCode(data.array()))
+    logger.debug(s"send - {}", session.deCode(data.array()))
     socketChannel.write(data, 1, new CompletionHandler[Integer, Int] {
       override def completed(result: Integer, attachment: Int): Unit = {
         writeSemaphore.release()
