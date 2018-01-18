@@ -1,9 +1,11 @@
 package demo
 
 import java.nio.ByteBuffer
+
 import lorance.rxsocket.session._
-import rx.lang.scala.Observable
-import scala.concurrent.ExecutionContext.Implicits.global
+import monix.execution.Ack.Continue
+import monix.reactive.Observable
+import monix.execution.Scheduler.Implicits.global
 
 /**
   * simplest Example
@@ -13,7 +15,7 @@ object NormalClient extends App{
   val client = new ClientEntrance("localhost", 10002)
   val socket = client.connect
 
-  val reading = Observable.from(socket).flatMap(_.startReading)
+  val reading = Observable.fromFuture(socket).flatMap(_.startReading)
 
   reading.subscribe { proto =>
     println(
@@ -21,6 +23,7 @@ object NormalClient extends App{
         s"uuid: ${proto.uuid}, " +
         s"length: ${proto.length}, " +
         s"load: ${new String(proto.loaded.array())}")
+    Continue
   }
 
   socket.foreach{s =>

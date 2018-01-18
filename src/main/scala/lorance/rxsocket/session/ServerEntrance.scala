@@ -5,16 +5,17 @@ import java.nio.channels.{AsynchronousServerSocketChannel, AsynchronousSocketCha
 
 import org.slf4j.LoggerFactory
 import lorance.rxsocket.dispatch.{TaskKey, TaskManager}
-import rx.lang.scala.{Observable, Subject}
+import monix.reactive.Observable
+import monix.reactive.subjects.PublishSubject
 
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success}
-import scala.concurrent.ExecutionContext.Implicits.global
+import monix.execution.Scheduler.Implicits.global
 
 class ServerEntrance(host: String, port: Int) {
   private val logger = LoggerFactory.getLogger(getClass)
 
-  private val connectionSubs = Subject[ConnectedSocket]
+  private val connectionSubs = PublishSubject[ConnectedSocket]
 
   val socketAddress: InetSocketAddress = new InetSocketAddress(host, port)
 

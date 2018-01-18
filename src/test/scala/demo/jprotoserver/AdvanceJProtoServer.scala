@@ -2,8 +2,8 @@ package demo.jprotoserver
 
 import lorance.rxsocket.presentation.json.{JProtoServer, JProtocol, Router}
 import lorance.rxsocket.session.ServerEntrance
+import monix.reactive.Observable
 import org.slf4j.LoggerFactory
-import rx.lang.scala.Observable
 
 
 /**

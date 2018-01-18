@@ -2,8 +2,10 @@ package benchmark
 
 import lorance.rxsocket.presentation.json.{IdentityTask, JProtocol}
 import lorance.rxsocket.session.ServerEntrance
+import monix.execution.Ack.Continue
 import org.json4s.JObject
 import org.slf4j.LoggerFactory
+import monix.execution.Scheduler.Implicits.global
 
 object JProtoServer extends App {
   val logger = LoggerFactory.getLogger(getClass)
@@ -16,16 +18,16 @@ object JProtoServer extends App {
   case class OverviewRsp(result: Option[OverviewContent], taskId: String) extends IdentityTask
   case class OverviewContent(id: String)
 
-//  Configration.NET_MSG_OVERLOAD = 3
-
-  readerJProt.subscribe ( s =>
-    s.jRead.subscribe{ j =>
+  readerJProt.subscribe { s =>
+    s.jRead.subscribe { j =>
       val jo = j.asInstanceOf[JObject]
       val tsk = jo.\("taskId").values.toString
-//      log(s"get jProto - $tsk")
       s.send(OverviewRsp(Some(OverviewContent("id")), tsk))
       s.send(OverviewRsp(None, tsk))
+      Continue
     }
-  )
+
+    Continue
+  }
   Thread.currentThread().join()
 }

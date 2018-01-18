@@ -12,16 +12,17 @@ import org.slf4j.{Logger, LoggerFactory}
 import lorance.rxsocket._
 import lorance.rxsocket.session.{CompletedProto, ConnectedSocket}
 import lorance.rxsocket.session.implicitpkg._
-import rx.lang.scala.{Observable, Subject}
 
 import scala.concurrent.duration.Duration
 import lorance.rxsocket.`implicit`.ObvsevableImplicit._
-import rx.lang.scala.subjects.PublishSubject
+import monix.execution.Ack.Continue
+import monix.reactive.Observable
+import monix.reactive.subjects.PublishSubject
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.control.NonFatal
+import monix.execution.Scheduler.Implicits.global
 
 /**
   * create a JProtocol to dispatch all json relate info bind with socket and it's read stream
@@ -29,8 +30,8 @@ import scala.util.control.NonFatal
 class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[CompletedProto]) {
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  private val tasks = new ConcurrentHashMap[String, Subject[JValue]]()
-  private def addTask(taskId: String, taskStream: Subject[JValue]) = tasks.put(taskId, taskStream)
+  private val tasks = new ConcurrentHashMap[String, PublishSubject[JValue]]()
+  private def addTask(taskId: String, taskStream: PublishSubject[JValue]) = tasks.put(taskId, taskStream)
   private def removeTask(taskId: String) = tasks.remove(taskId)
   private def getTask(taskId: String) = Option(tasks.get(taskId))
 
@@ -94,7 +95,7 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
                   val subj = this.getTask(taskId)
                   subj.foreach{ sub =>
                     removeTask(taskId)
-                    sub.onCompleted()
+                    sub.onComplete()
                   }
                 case JString("on") =>
                   val subj = this.getTask(taskId)
@@ -125,6 +126,8 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
         logger.warn(s"jread fail: ${compact(render(jsonRsp))} - ", e)
         Unit
     }
+
+    Continue
   }
 
 
@@ -150,12 +153,12 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
   def sendWithRsp[Req, Rsp]
   (any: Req)
   (implicit mf: Manifest[Rsp]): Future[Rsp] = {
-    val register = Subject[JValue]
+    val register = PublishSubject[JValue]
     val taskId = presentation.getTaskId
     this.addTask(taskId, register)
 
-    val resultFur = register.map{s => s.extract[Rsp]}.
-      timeout(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS)).
+    val resultFur = register.map{s => s.extract[Rsp]}
+      .timeoutOnSlowDownstream(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS)).
       future
 
     resultFur.onComplete({
@@ -180,7 +183,7 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
     * @param additional complete the stream ahead of time
     */
   def sendWithStream[Req, Rsp](any: Req, additional: Option[Observable[Rsp] => Observable[Rsp]] = None)(implicit mf: Manifest[Rsp]) = {
-    val register = Subject[JValue]()
+    val register = PublishSubject[JValue]()
     val taskId = presentation.getTaskId
     this.addTask(taskId, register)
 
@@ -190,13 +193,12 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
     }
 
     val resultStream = additional.map(f => f(extract)).getOrElse(extract)
-      .timeout(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS))
-      .map(x => {println("xxx -lll");x})
+      .timeoutOnSlowUpstream(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS))
       .doOnError { e => logger.error(s"[Throw] JProtocol.taskResult - $any", e) }
-      .doOnCompleted{
-        println("do remove - ")
+      .doOnComplete{ () =>
         this.removeTask(taskId)
       }
+      .doOnEarlyStop(() => this.removeTask(taskId))
 
     //send msg after prepare stream
     val mergeTaskId =
@@ -205,9 +207,7 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
     val bytes = JsonParse.enCode(mergeTaskId)
     connectedSocket.send(ByteBuffer.wrap(bytes))
 
-    resultStream
-      //.map(x => {println("hot obv test");x})
-      .share
+    resultStream.share
   }
 
 }

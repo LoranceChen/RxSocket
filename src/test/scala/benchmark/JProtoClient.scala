@@ -2,10 +2,11 @@ package benchmark
 
 import lorance.rxsocket.presentation.json.JProtocol
 import lorance.rxsocket.session.ClientEntrance
+import monix.execution.Ack.Continue
+import monix.reactive.Observable
 import org.slf4j.LoggerFactory
-import rx.lang.scala.Observable
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import monix.execution.Scheduler.Implicits.global
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success}
 
@@ -18,6 +19,7 @@ object JProtoClient extends App {
       s => {
         lst.synchronized(lst.+=(s))
         logger.info(s"overview Rsp ready - " + lst.mkString("\n"))
+        Continue
       },
       e => p.tryFailure(e),
       () => p.trySuccess(lst.toList)
@@ -55,19 +57,19 @@ object JProtoClient extends App {
   }
 
   logger.info(s"begin send 1000 times for make jvm hot =============", -15)
-  for(i <- -400 to -1) {
+  for(i <- -1000 to -1) {
     get(s"ha${i}")
 //    justSend(s"ha${i}")
   }
 
-  Thread.sleep(5000 * 1000)
+  Thread.sleep(1000 * 10)
 
   /**
     * scala> (1504661141248L - 1504661140886L ) / 3000.0F
     * res2: Float = 0.12066667 (ms)
     */
   logger.info(s"begin send times  =============", -15)
-  for(i <- 1 to 300000) {
+  for(i <- 1 to 100000) {
     get(s"ha${i}")
 //    justSend(s"ha${i}")
   }

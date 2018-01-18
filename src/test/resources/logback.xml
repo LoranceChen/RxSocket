@@ -4,13 +4,13 @@
     <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
         <!--  just for stdout in screen   -->
         <encoder charset="UTF-8">
-            <pattern>[%date] [%level] [%logger{35}] - %msg%n</pattern>
+            <pattern>[%thread] [%date] [%level] [%logger{35}] - %msg%n</pattern>
         </encoder>
     </appender>
 
     <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <encoder charset="UTF-8">
-            <pattern>[%date] [%level] [%logger{35}] - %msg%n</pattern>
+            <pattern>[%thread] [%date] [%level] [%logger{35}] - %msg%n</pattern>
         </encoder>
 
         <!--fill log-->

@@ -2,8 +2,10 @@ package demo
 
 import lorance.rxsocket.presentation.json.{IdentityTask, JProtocol}
 import lorance.rxsocket.session.ServerEntrance
+import monix.execution.Ack.Continue
 import org.json4s.JsonAST.JString
 import org.json4s.native.JsonMethods._
+import monix.execution.Scheduler.Implicits.global
 
 /**
   * Json presentation Example
@@ -15,17 +17,20 @@ object SimpleJProtoServer extends App {
 
   case class Response(result: Option[String], taskId: String) extends IdentityTask
 
-  jprotoSocket.subscribe ( s =>
+  jprotoSocket.subscribe { s =>
     s.jRead.subscribe{ j =>
       println(s"GET_INFO - ${ compact(render(j))}")
       Thread.sleep(1000)
       val JString(tskId) = j \ "taskId" //assume has taskId for simplify
       //send multiple msg with same taskId as a stream
       s.send(Response(Some("foo"), tskId))
-      s.send(Response(Some("boo"), tskId))
+//      s.send(Response(Some("boo"), tskId))
       s.send(Response(None, tskId))
+      Continue
     }
-  )
+
+    Continue
+  }
 
   Thread.currentThread().join()
 }

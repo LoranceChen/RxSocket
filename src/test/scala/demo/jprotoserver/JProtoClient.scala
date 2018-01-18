@@ -2,10 +2,11 @@ package demo.jprotoserver
 
 import lorance.rxsocket.presentation.json.JProtocol
 import lorance.rxsocket.session.ClientEntrance
+import monix.execution.Ack.Continue
+import monix.reactive.Observable
 import org.json4s.JsonAST.JValue
-import rx.lang.scala.Observable
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import monix.execution.Scheduler.Implicits.global
 
 /**
   *
@@ -17,7 +18,7 @@ object JProtoClient extends App {
 
   RxSocketAPI.login.foreach(loginSuccess => println("loginSuccess: " + loginSuccess))
   RxSocketAPI.register.foreach(result => println("register result: " + result))
-  RxSocketAPI.position.subscribe(p => println("current position - " + p))
+  RxSocketAPI.position.subscribe{p => println("current position - " + p);Continue}
 
   Thread.currentThread().join()
 
@@ -38,7 +39,7 @@ object JProtoClient extends App {
 
     def position = {
       println("my current position")
-      Observable.from(jproto).flatMap { s =>
+      Observable.fromFuture(jproto).flatMap { s =>
         s.sendWithStream[Request[Boolean], JValue](Request("login", "POSITION_PROTO", true))
       }
     }

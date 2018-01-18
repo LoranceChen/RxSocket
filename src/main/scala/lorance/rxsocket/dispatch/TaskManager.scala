@@ -1,13 +1,14 @@
 package lorance.rxsocket.dispatch
 
 import java.util
-
 import java.util.Comparator
 
+import monix.execution.Ack.Continue
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
 import scala.concurrent.Promise
+import monix.execution.Scheduler.Implicits.global
 
 /**
   * todo remove the first task after it was ensure not nextTask
@@ -145,9 +146,10 @@ class TaskManager {
   private val dispatch = new TaskHolder()
 
   //notice the observer execute at Dispatch Thread if `afterExecute` not use `observeOn`
-  dispatch.afterExecute.subscribe ( (lastTask) =>
+  dispatch.afterExecute.subscribe { lastTask =>
     dataSetOperateQueue.tell(NextTask(lastTask))
-  )
+    Continue
+  }
 
   def tasksCount = {
     val promise = Promise[Int]()

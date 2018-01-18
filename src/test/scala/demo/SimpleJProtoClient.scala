@@ -2,10 +2,11 @@ package demo
 
 import lorance.rxsocket.presentation.json.JProtocol
 import lorance.rxsocket.session.ClientEntrance
-import rx.lang.scala.Observable
+import monix.execution.Ack.Continue
+import monix.reactive.Observable
 
-import scala.concurrent.{Future, Promise}
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Await, Future, Promise}
+import monix.execution.Scheduler.Implicits.global
 
 /**
   * Json presentation Example
@@ -14,9 +15,36 @@ object SimpleJProtoClient extends App {
   val client = new ClientEntrance("localhost", 10011).connect
   val jproto = client.map { x => new JProtocol(x, x.startReading) }
 
-  val namesFur = getMyNames("admin")
+//  val namesFur = getMyNames("admin")
+//
+//  namesFur.foreach(names => println(names.toString))
 
-  namesFur.foreach(names => println(names.toString))
+
+//  Thread.sleep(10 * 1000)
+  println("sleeped")
+
+  import concurrent.duration._
+  val rst = Await.result(jproto, 5 seconds).
+    sendWithStream[Request, Response](Request("admin"),
+      Some((x: Observable[Response]) => x.takeWhile(_.result.nonEmpty))
+    )
+
+  rst.subscribe{x =>
+    println("rst - " + x)
+    Continue
+  }
+
+  rst.subscribe{x =>
+    println("rst2 - " + x)
+    Continue
+  }
+  Thread.sleep(1000 * 2)
+
+  println("later subscribe miss the message")
+  rst.subscribe{x =>
+    println("rst3 - " + x)
+    Continue
+  }
 
   Thread.currentThread().join()
 
@@ -34,13 +62,9 @@ object SimpleJProtoClient extends App {
     val p = Promise[List[Response]]
     val lst = scala.collection.mutable.ListBuffer[Response]()
     observable.subscribe(
-      s => {
-        lst.synchronized(lst.+=(s))
-      },
-      e =>
-        p.tryFailure(e),
-      () =>
-        p.trySuccess(lst.toList)
+      s => {lst.synchronized(lst.+=(s));Continue},
+      e => p.tryFailure(e),
+      () => p.trySuccess(lst.toList)
     )
 
     p.future

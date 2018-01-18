@@ -1,8 +1,9 @@
 package lorance.rxsocket.dispatch
 
+import monix.execution.Scheduler
+import monix.reactive.Observable
+import monix.reactive.subjects.PublishSubject
 import org.slf4j.LoggerFactory
-import rx.lang.scala.{Observable, Subject}
-import rx.lang.scala.schedulers.ExecutionContextScheduler
 
 import concurrent.ExecutionContext.Implicits.global
 
@@ -17,7 +18,7 @@ import concurrent.ExecutionContext.Implicits.global
   */
 class TaskHolder {
   private val logger = LoggerFactory.getLogger(getClass)
-  private val subject = Subject[Task]() // emit completed event
+  private val subject = PublishSubject[Task] // emit completed event
 
   private var sleepTime: Option[Long] = None //execute if delay is navigate
   private var action: Option[() => Task] = None
@@ -41,7 +42,7 @@ class TaskHolder {
     override val taskId: TaskKey = TaskKey("0.0.0.0:0000", 0)
   }
 
-  val afterExecute: Observable[Task] = subject.observeOn(ExecutionContextScheduler(global)) //emit the executed task
+  val afterExecute: Observable[Task] = subject.observeOn(Scheduler(global)) //emit the executed task
 
   def ready(newTask: Task): (Boolean, Option[Task]) = {
     readyUnsafe(newTask, {

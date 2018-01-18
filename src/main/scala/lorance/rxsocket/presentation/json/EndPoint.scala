@@ -1,7 +1,7 @@
 package lorance.rxsocket.presentation.json
 
+import monix.reactive.Observable
 import org.json4s.JsonAST.JValue
-import rx.lang.scala.Observable
 
 import scala.concurrent.Future
 import scala.util.Try

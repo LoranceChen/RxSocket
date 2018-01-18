@@ -32,7 +32,7 @@ publishTo := {
 
 
 libraryDependencies ++= Seq(
-  "io.reactivex" %% "rxscala" % "0.26.5",
+  "io.monix" %% "monix" % "3.0.0-M3",
   "org.json4s" %% "json4s-native" % "3.6.0-M2",
   "org.slf4j" % "slf4j-api" % "1.7.25",
   "ch.qos.logback" % "logback-classic" % "1.2.3" % Test,

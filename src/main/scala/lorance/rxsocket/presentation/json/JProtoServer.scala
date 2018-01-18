@@ -1,31 +1,33 @@
 package lorance.rxsocket.presentation.json
 
+import monix.execution.Ack.Continue
+import monix.reactive.Observable
 import org.slf4j.LoggerFactory
-import rx.lang.scala.Observable
 import org.json4s.JsonAST.JValue
 import org.json4s.JsonDSL._
+
 import scala.util.{Failure, Success}
-import scala.concurrent.ExecutionContext.Implicits.global
+import monix.execution.Scheduler.Implicits.global
 
 class JProtoServer(jProtos: Observable[JProtocol], routes: List[Router]) {
   val logger = LoggerFactory.getLogger(getClass)
 
   routes.foreach(_.register)
   //handle streams
-  jProtos.subscribe ( skt =>
-    skt.jRead.subscribe{ jValue =>
+  jProtos.subscribe { skt =>
+    skt.jRead.subscribe { jValue =>
 
       /**
         * protocol form client:
         * {
-        *   taskId: ...
-        *   load: {
-        *     path: ...
-        *     protoId: ...
-        *     load: {
-        *       ...
-        *     }
-        *   }
+        * taskId: ...
+        * load: {
+        * path: ...
+        * protoId: ...
+        * load: {
+        * ...
+        * }
+        * }
         * }
         */
       val load = jValue \ "load"
@@ -33,15 +35,16 @@ class JProtoServer(jProtos: Observable[JProtocol], routes: List[Router]) {
       val endPoint = Router.dispatch(load)
 
       logger.debug("result message - " + endPoint)
+
       /**
         * protocol to client:
         * {
-        *   taskId: ...
-        *   type: ...
-        *   status: ...
-        *   load: {
-        *     ...
-        *   }
+        * taskId: ...
+        * type: ...
+        * status: ...
+        * load: {
+        * ...
+        * }
         * }
         */
       endPoint match {
@@ -71,7 +74,7 @@ class JProtoServer(jProtos: Observable[JProtocol], routes: List[Router]) {
                 ("load" -> jValRst)
             skt.send(finalJson)
           })
-          jValRstFur.failed.foreach{ error =>
+          jValRstFur.failed.foreach { error =>
             logger.error("FurEndPoint failed:", error)
 
             val finalJson =
@@ -82,16 +85,18 @@ class JProtoServer(jProtos: Observable[JProtocol], routes: List[Router]) {
             skt.send(finalJson)
           }
         case StreamEndPoint(jValRst) =>
-          jValRst.subscribe(onNext = event => {
-            val finalJson: JValue =
-              ("taskId" -> taskId) ~
-                ("type" -> "stream") ~
-                ("status" -> "on") ~
-                ("load" -> event)
+          jValRst.subscribe(
+            event => {
+              val finalJson: JValue =
+                ("taskId" -> taskId) ~
+                  ("type" -> "stream") ~
+                  ("status" -> "on") ~
+                  ("load" -> event)
 
-            skt.send(finalJson)
-          },
-            onError = error => {
+              skt.send(finalJson)
+              Continue
+            },
+            error => {
               logger.error("StreamEndPoint failed:", error)
               val finalJson: JValue =
                 ("taskId" -> taskId) ~
@@ -101,16 +106,21 @@ class JProtoServer(jProtos: Observable[JProtocol], routes: List[Router]) {
 
               skt.send(finalJson)
             },
-            onCompleted = () => {
+            () => {
               val finalJson: JValue =
                 ("taskId" -> taskId) ~
                   ("type" -> "stream") ~
                   ("status" -> "end")
 
               skt.send(finalJson)
-            })
+            }
+          )
         case EmptyEndPoint => Unit
       }
+
+      Continue
     }
-  )
+
+    Continue
+  }
 }

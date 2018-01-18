@@ -1,11 +1,11 @@
 package demo.jprotoserver
 
 import lorance.rxsocket.presentation.json.{EmptyEndPoint, EndPoint, RawEndPoint, Router, StreamEndPoint}
+import monix.reactive.Observable
 import org.json4s.DefaultFormats
 import org.json4s.JsonAST._
 import org.json4s.JsonDSL._
 import org.slf4j.LoggerFactory
-import rx.lang.scala.Observable
 
 import scala.util.Success
 

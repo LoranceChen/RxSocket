@@ -10,8 +10,10 @@ import lorance.rxsocket.dispatch.TaskManager
 import lorance.rxsocket.session.exception.ReadResultNegativeException
 import lorance.rxsocket._
 import lorance.rxsocket.session.implicitpkg._
-import rx.lang.scala.schedulers.ExecutionContextScheduler
-import rx.lang.scala.{Observable, Subject, Subscriber, Subscription}
+import monix.execution.Scheduler
+import monix.reactive.Observable
+import monix.reactive.OverflowStrategy.Unbounded
+import monix.reactive.subjects.PublishSubject
 
 import scala.collection.mutable
 import scala.concurrent.{Future, Promise}
@@ -26,15 +28,15 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
   private val logger = LoggerFactory.getLogger(getClass)
 
   private val readerDispatch = new ReaderDispatch()
-  private val readSubscribes = Subject[CompletedProto]
+  private val readSubscribes = PublishSubject[CompletedProto]
 
-  private val closeObv = Subject[AddressPair]()
+  private val closeObv = PublishSubject[AddressPair]()
   private val readAttach = Attachment(ByteBuffer.allocate(Configration.READBUFFER_LIMIT), socketChannel)
 
   private[session] var heart: Boolean = false
 
   //a event register when socket disconnect
-  val onDisconnected: Observable[AddressPair] = closeObv.observeOn(ExecutionContextScheduler(global))
+  val onDisconnected: Observable[AddressPair] = closeObv.observeOn(Scheduler(global))
 
   lazy val disconnect = {
 
@@ -45,7 +47,7 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
     heartBeatsManager.cancelTask(addressPair.remote + ".SendHeartBeat")
     heartBeatsManager.cancelTask(addressPair.remote + ".CheckHeartBeat")
     closeObv.onNext(addressPair)
-    closeObv.onCompleted()
+    closeObv.onComplete()
   }
 
   val startReading: Observable[CompletedProto] = {
@@ -55,8 +57,8 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
 
     //todo handle back pressure buffer with more controller
     readSubscribes
-      .onBackpressureBuffer
-      .doOnCompleted(() => logger.debug("reading completed"))
+      .whileBusyBuffer(Unbounded)
+      .doOnComplete(() => logger.debug("reading completed"))
       .doOnError(e => logger.warn("reading completed with error - ", e))
   }
 
@@ -67,12 +69,12 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
           f match {
             case e: ReadResultNegativeException =>
               logger.debug(s"read finished")
-              readSubscribes.onCompleted()
+              readSubscribes.onComplete()
 //              for (s <- readSubscribes) { s.onCompleted()}
             case e =>
               logger.error(s"unhandle exception - $f")
               //unexpected disconnect also seems as normal completed
-              readSubscribes.onCompleted()
+              readSubscribes.onComplete()
             //              for (s <- readSubscribes) { s.onCompleted()} //exception or onCompleted
           }
         case Success(c) =>
