@@ -6,7 +6,7 @@ Reactive programming has a important concept of stream which allow application s
 ### SBT Usage
 - only published for Scala 2.12.x
 ```
-"com.scalachan" %% "rxsocket" % "0.10.1"
+"com.scalachan" %% "rxsocket" % "0.11.0"
 ```
 
 ### Feature
