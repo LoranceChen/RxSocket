@@ -4,7 +4,6 @@
 Reactive programming has a important concept of stream which allow application scale vertically and apply good multi-thread dispatch for concurrent event.Network programming is designed as many layer for different data types. It's nature and useful if use Reactive Style to implement network data stream.At upper of TCP, the library complete a basic function of Session Layer and Json Presentation Layer.
 
 ### SBT Usage
-- only published for Scala 2.12.x
 ```
 "com.scalachan" %% "rxsocket" % "0.11.0"
 ```
