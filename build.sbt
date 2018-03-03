@@ -86,3 +86,5 @@ lazy val root = (project in file(".")).
         </developers>
 
   )
+
+fork := true

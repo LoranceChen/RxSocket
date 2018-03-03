@@ -58,7 +58,7 @@ class HeartBeatCheckTask ( val taskId: TaskKey,
     logger.debug("execute check heart beat task")
 
     if(!connectedSocket.heart) {
-      logger.info("disconnected because of no heart beat response")
+      logger.info(s"disconnected because of no heart beat response - ${connectedSocket.addressPair.remote}")
       connectedSocket.disconnect
     } else {
       connectedSocket.heart = false

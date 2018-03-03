@@ -164,7 +164,7 @@ class ReaderDispatch(private var tmpProto: PaddingProto, maxLength: Int = Config
           src.get(newAf, 0, needLength)
 
           val completed = CompletedProto(uuid, length, padding.put(newAf))
-          logger.info(s"${this.getClass.toString} : get protocol - ${(completed.uuid, completed.length, new String(completed.loaded.array))}")
+          logger.debug(s"get complete protocol - ${(completed.uuid, completed.length, new String(completed.loaded.array))}")
           Some(completed)
         }
         protoOpt match {
