@@ -25,5 +25,5 @@ Reactive programming has a important concept of stream which allow application s
 - custom protocol parser
  	- do like Erlang bit pattern match: `<<1::size(8), length::big-32, json::binary>>`
  	- DSL implement as http4s route match DSL
-- combine heartbeat timer task
+- combine heartbeat timer task  
 :: currently, every socket has heartbeat timer task which occupy many resource for scheduler.
