@@ -39,13 +39,13 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
     * parse to json if uuid == 1
     */
   val jRead: Observable[JValue] = {
-    read.map{cp =>
-        if(cp.uuid == 1.toByte) {
-          val load = cp.loaded.array.string
-          logger.debug(s"$load", 46, Some("proto-json"))
-          Some(parse(load))
-        } else  None
-      }.filter(_.nonEmpty).map(_.get)
+    read.map{ cp =>
+      if(cp.uuid == 1.toByte) {
+        val load = cp.loaded.array.string
+        logger.debug(s"$load", 46, Some("proto-json"))
+        Some(parse(load))
+      } else  None
+    }.filter(_.nonEmpty).map(_.get)
   }
 
   /**
