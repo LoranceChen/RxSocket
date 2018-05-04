@@ -10,6 +10,10 @@ import monix.execution.Scheduler.Implicits.global
 object JProtoServer extends App {
   val logger = LoggerFactory.getLogger(getClass)
 
+  lorance.rxsocket.session.Configration.CHECK_HEART_BEAT_BREAKTIME = Int.MaxValue
+  lorance.rxsocket.session.Configration.SEND_HEART_BEAT_BREAKTIME = Int.MaxValue
+
+
   val conntected = new ServerEntrance("127.0.0.1", 10011).listen
   val readX = conntected.map(c => (c, c.startReading))
 
@@ -22,8 +26,11 @@ object JProtoServer extends App {
     s.jRead.subscribe { j =>
       val jo = j.asInstanceOf[JObject]
       val tsk = jo.\("taskId").values.toString
+      logger.info(s"get data - $tsk")
+
       s.send(OverviewRsp(Some(OverviewContent("id")), tsk))
-      s.send(OverviewRsp(None, tsk))
+      logger.info(s"sent data - $tsk")
+//      s.send(OverviewRsp(None, tsk))
       Continue
     }
 
