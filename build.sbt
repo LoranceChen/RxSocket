@@ -1,11 +1,11 @@
-version := "0.11.0"
+version := "0.12.0"
 
 name := "rxsocket"
 
 organization := "com.scalachan"
 
-scalaVersion := "2.12.4"
-crossScalaVersions := Seq("2.12.4", "2.11.12", "2.10.7")
+scalaVersion := "2.12.6"
+crossScalaVersions := Seq("2.12.6", "2.11.12")
 
 scalacOptions ++= Seq(
   "-deprecation",
