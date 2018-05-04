@@ -1,7 +1,7 @@
 package demo.jprotoserver
 
 import lorance.rxsocket.presentation.json.{JProtoServer, JProtocol, Router}
-import lorance.rxsocket.session.ServerEntrance
+import lorance.rxsocket.session.{ConnectedSocket, ServerEntrance}
 import monix.reactive.Observable
 import org.slf4j.LoggerFactory
 
@@ -24,12 +24,10 @@ object AdvanceJProtoServer extends App {
 class SimpleServer(host: String, port: Int, routes: List[Router]) {
   val logger = LoggerFactory.getLogger(getClass)
   //socket init
-  val conntected = new ServerEntrance(host, port).listen
-  val readX = conntected.map(c => (c, c.startReading))
-
-  val readerJProt: Observable[JProtocol] = readX.map(cx => new JProtocol(cx._1, cx._2))
+  val connectedStream: Observable[ConnectedSocket] = new ServerEntrance(host, port).listen
+  val jsonProtoStream: Observable[JProtocol] = connectedStream.map(c =>  new JProtocol(c, c.startReading))
 
   //register service
-  val jProtoServer = new JProtoServer(readerJProt, routes)
+  val jProtoServer = new JProtoServer(jsonProtoStream, routes)
 
 }
