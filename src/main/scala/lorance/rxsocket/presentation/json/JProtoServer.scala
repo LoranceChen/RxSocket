@@ -1,5 +1,6 @@
 package lorance.rxsocket.presentation.json
 
+import monix.execution.Ack
 import monix.execution.Ack.Continue
 import monix.reactive.Observable
 import org.slf4j.LoggerFactory
@@ -8,6 +9,8 @@ import org.json4s.JsonDSL._
 
 import scala.util.{Failure, Success}
 import monix.execution.Scheduler.Implicits.global
+
+import scala.concurrent.{Future, Promise}
 
 class JProtoServer(jProtos: Observable[JProtocol], routes: List[Router]) {
   val logger = LoggerFactory.getLogger(getClass)
@@ -47,34 +50,37 @@ class JProtoServer(jProtos: Observable[JProtocol], routes: List[Router]) {
         *   }
         * }
         */
-      endPoint match {
+      val rst: Future[Ack] = endPoint match {
         case RawEndPoint(jValRst) =>
-          jValRst match {
+          val rst: Future[Ack] = jValRst match {
             case Failure(e) =>
               val finalJson =
                 ("taskId" -> taskId) ~
                   ("type" -> "once") ~
                   ("status" -> "error") ~
                   ("load" -> e.getStackTrace.toString)
-              skt.send(finalJson)
+              skt.send(finalJson).flatMap(_ => Continue)
             case Success(rst) =>
               val finalJson =
                 ("taskId" -> taskId) ~
                   ("type" -> "once") ~
                   ("status" -> "end") ~
                   ("load" -> rst)
-              skt.send(finalJson)
+              skt.send(finalJson).flatMap(_ => Continue)
           }
+          rst
         case FurEndPoint(jValRstFur) =>
-          jValRstFur.foreach(jValRst => {
+          val p = Promise[Unit]
+          jValRstFur.map(jValRst => {
             val finalJson =
               ("taskId" -> taskId) ~
                 ("type" -> "once") ~
                 ("status" -> "end") ~
                 ("load" -> jValRst)
-            skt.send(finalJson)
+            p.tryCompleteWith(skt.send(finalJson))
+
           })
-          jValRstFur.failed.foreach { error =>
+          jValRstFur.failed.map { error =>
             logger.error("FurEndPoint failed:", error)
 
             val finalJson =
@@ -82,9 +88,13 @@ class JProtoServer(jProtos: Observable[JProtocol], routes: List[Router]) {
                 ("type" -> "once") ~
                 ("status" -> "error") ~
                 ("load" -> error.getStackTrace.mkString)
-            skt.send(finalJson)
+            p.tryCompleteWith(skt.send(finalJson))
           }
+
+          val rst: Future[Ack] = p.future.flatMap(_ => Continue)
+          rst
         case StreamEndPoint(jValRst) =>
+          val promise = Promise[Ack]
           jValRst.subscribe(
             event => {
               val finalJson: JValue =
@@ -93,8 +103,8 @@ class JProtoServer(jProtos: Observable[JProtocol], routes: List[Router]) {
                   ("status" -> "on") ~
                   ("load" -> event)
 
-              skt.send(finalJson)
-              Continue
+              //this stream i
+              skt.send(finalJson).flatMap(_ => Continue)
             },
             error => {
               logger.error("StreamEndPoint failed:", error)
@@ -104,7 +114,10 @@ class JProtoServer(jProtos: Observable[JProtocol], routes: List[Router]) {
                   ("status" -> "error") ~
                   ("load" -> error.getStackTrace.mkString)
 
-              skt.send(finalJson)
+              val rst: Future[Ack] = skt.send(finalJson).flatMap(_ => Continue)
+
+              promise.tryCompleteWith(Continue)
+              Unit
             },
             () => {
               val finalJson: JValue =
@@ -112,13 +125,17 @@ class JProtoServer(jProtos: Observable[JProtocol], routes: List[Router]) {
                   ("type" -> "stream") ~
                   ("status" -> "end")
 
-              skt.send(finalJson)
+              val rst: Future[Ack] = skt.send(finalJson).flatMap(_ => Continue)
+
+              promise.tryCompleteWith(Continue)
+              Unit
             }
           )
+          promise.future
         case EmptyEndPoint => Unit
+          Continue
       }
-
-      Continue
+      rst
     }
 
     Continue

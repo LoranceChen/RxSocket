@@ -10,12 +10,12 @@ import lorance.rxsocket.dispatch.TaskManager
 import lorance.rxsocket.session.exception.ReadResultNegativeException
 import lorance.rxsocket._
 import lorance.rxsocket.session.implicitpkg._
+import monix.execution.Ack.{Continue, Stop}
 import monix.execution.Scheduler
-import monix.reactive.Observable
+import monix.reactive.{Observable, OverflowStrategy}
 import monix.reactive.OverflowStrategy.Unbounded
 import monix.reactive.subjects.PublishSubject
 
-import scala.collection.mutable
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success, Try}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -55,9 +55,8 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
 
     beginReading()
 
-    //todo handle back pressure buffer with more controller
     readSubscribes
-      .whileBusyBuffer(Unbounded)
+      .asyncBoundary(OverflowStrategy.Default)
       .doOnComplete(() => logger.debug("reading completed"))
       .doOnError(e => logger.warn("reading completed with error - ", e))
   }
@@ -70,40 +69,58 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
             case e: ReadResultNegativeException =>
               logger.debug(s"read finished")
               readSubscribes.onComplete()
-//              for (s <- readSubscribes) { s.onCompleted()}
             case e =>
               logger.error(s"unhandle exception - $f")
               //unexpected disconnect also seems as normal completed
               readSubscribes.onComplete()
-            //              for (s <- readSubscribes) { s.onCompleted()} //exception or onCompleted
           }
         case Success(c) =>
           val src = c.byteBuffer
           logger.trace(s"read position: ${src.position} bytes")
-          readerDispatch.receive(src).foreach{protos =>
+          readerDispatch.receive(src).foreach{protos: Vector[CompletedProto] =>
             logger.trace(s"dispatched protos - ${protos.map(p => p.loaded.array().string)}")
-            protos.foreach{proto =>
-              //filter heart beat proto
-              logger.trace(s"completed proto - $proto")
 
-              if(proto.uuid == 0.toByte) {
-                logger.trace(s"dispatched heart beat - $proto")
-                heart = true
-              } else {
-                readSubscribes.onNext(proto)
-//                readSubscribes.foreach { s =>
-//                  s.onNext(proto)
-//                }
+            def publishProtoWithGoodHabit(leftProtos: Vector[CompletedProto]): Unit = {
+              leftProtos.headOption match {
+                case None => //send all proto
+                  beginReadingClosure() //read socket message
+                case Some(proto) => //has some proto not send complete
+                  //filter heart beat proto
+                  logger.trace(s"completed proto - $proto")
+
+                  if(proto.uuid == 0.toByte) {
+                    logger.trace(s"dispatched heart beat - $proto")
+                    heart = true
+                  } else {
+                    readSubscribes.onNext(proto).map {
+                      case Continue =>
+                        publishProtoWithGoodHabit(leftProtos.tail)
+                        Continue
+                      case Stop =>
+                        Stop
+                    }
+                  }
               }
+
             }
+            publishProtoWithGoodHabit(protos)
+//            protos.foreach{proto =>
+//              //filter heart beat proto
+//              logger.trace(s"completed proto - $proto")
+//
+//              if(proto.uuid == 0.toByte) {
+//                logger.trace(s"dispatched heart beat - $proto")
+//                heart = true
+//              } else {
+//                readSubscribes.onNext(proto)
+//              }
+//            }
           }
-          beginReadingClosure()
+//          beginReadingClosure()
       }
     }
     beginReadingClosure()
   }
-
-//  private lazy val count = new Count()
 
   private val writeSemaphore = new Semaphore(1)
 
@@ -113,6 +130,8 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
     * under construct some write operation.
     *
     * throw WritePendingException Unchecked exception thrown when an attempt is made to write to an asynchronous socket channel and a previous write has not completed.
+    *
+    * todo: send operation on separate thread pool, the thread pool hold all sockets block send operation.
     */
   def send(data: ByteBuffer) = {
     val p = Promise[Unit]
