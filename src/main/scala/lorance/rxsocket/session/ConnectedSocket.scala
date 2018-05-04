@@ -2,23 +2,22 @@ package lorance.rxsocket.session
 
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
-import java.nio.channels.{AsynchronousSocketChannel, CompletionHandler}
+import java.nio.channels.{AsynchronousSocketChannel, ClosedChannelException, CompletionHandler, ShutdownChannelGroupException}
 import java.util.concurrent.Semaphore
 
 import org.slf4j.LoggerFactory
 import lorance.rxsocket.dispatch.TaskManager
-import lorance.rxsocket.session.exception.ReadResultNegativeException
+import lorance.rxsocket.session.exception.{ReadResultNegativeException, SocketClosedException}
 import lorance.rxsocket._
 import lorance.rxsocket.session.implicitpkg._
 import monix.execution.Ack.{Continue, Stop}
-import monix.execution.Scheduler
 import monix.reactive.{Observable, OverflowStrategy}
-import monix.reactive.OverflowStrategy.Unbounded
 import monix.reactive.subjects.PublishSubject
 
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success, Try}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.control.NonFatal
 
 case class AddressPair(local: InetSocketAddress, remote: InetSocketAddress)
 
@@ -30,13 +29,15 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
   private val readerDispatch = new ReaderDispatch()
   private val readSubscribes = PublishSubject[CompletedProto]
 
-  private val closeObv = PublishSubject[AddressPair]()
+  private val closePromise = Promise[AddressPair]()
   private val readAttach = Attachment(ByteBuffer.allocate(Configration.READBUFFER_LIMIT), socketChannel)
 
   private[session] var heart: Boolean = false
 
+  @volatile private var socketClosed = false
+
   //a event register when socket disconnect
-  val onDisconnected: Observable[AddressPair] = closeObv.observeOn(Scheduler(global))
+  val onDisconnected: Future[AddressPair] = closePromise.future
 
   lazy val disconnect = {
 
@@ -46,8 +47,7 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
     }
     heartBeatsManager.cancelTask(addressPair.remote + ".SendHeartBeat")
     heartBeatsManager.cancelTask(addressPair.remote + ".CheckHeartBeat")
-    closeObv.onNext(addressPair)
-    closeObv.onComplete()
+    closePromise.trySuccess(addressPair)
   }
 
   val startReading: Observable[CompletedProto] = {
@@ -77,7 +77,7 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
         case Success(c) =>
           val src = c.byteBuffer
           logger.trace(s"read position: ${src.position} bytes")
-          readerDispatch.receive(src).foreach{protos: Vector[CompletedProto] =>
+          readerDispatch.receive(src).foreach { protos: Vector[CompletedProto] =>
             logger.trace(s"dispatched protos - ${protos.map(p => p.loaded.array().string)}")
 
             def publishProtoWithGoodHabit(leftProtos: Vector[CompletedProto]): Unit = {
@@ -88,7 +88,7 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
                   //filter heart beat proto
                   logger.trace(s"completed proto - $proto")
 
-                  if(proto.uuid == 0.toByte) {
+                  if (proto.uuid == 0.toByte) {
                     logger.trace(s"dispatched heart beat - $proto")
                     heart = true
                   } else {
@@ -103,7 +103,9 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
               }
 
             }
+
             publishProtoWithGoodHabit(protos)
+          }
 //            protos.foreach{proto =>
 //              //filter heart beat proto
 //              logger.trace(s"completed proto - $proto")
@@ -115,9 +117,8 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
 //                readSubscribes.onNext(proto)
 //              }
 //            }
-          }
+        }
 //          beginReadingClosure()
-      }
     }
     beginReadingClosure()
   }
@@ -133,27 +134,44 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
     *
     * todo: send operation on separate thread pool, the thread pool hold all sockets block send operation.
     */
-  def send(data: ByteBuffer) = {
+  def send(data: ByteBuffer): Future[Unit] = Future{
     val p = Promise[Unit]
 
-    writeSemaphore.acquire()
-    logger.debug(s"send - {}", session.deCode(data.array()))
-    socketChannel.write(data, 1, new CompletionHandler[Integer, Int] {
-      override def completed(result: Integer, attachment: Int): Unit = {
-        writeSemaphore.release()
-        logger.trace(s"result - $result")
-        p.trySuccess(Unit)
-      }
+    if(socketClosed) {
+      p.tryFailure(SocketClosedException(addressPair.toString))
+    } else {
+      writeSemaphore.acquire()
+      if(socketClosed) {
+        p.tryFailure(SocketClosedException(addressPair.toString))
+      } else {
+        logger.debug(s"send - {}", session.deCode(data.array()))
+        try {
+          socketChannel.write(data, 1, new CompletionHandler[Integer, Int] {
+            override def completed(result: Integer, attachment: Int): Unit = {
+              writeSemaphore.release()
+              logger.trace(s"result - $result")
+              p.trySuccess(Unit)
+            }
 
-      override def failed(exc: Throwable, attachment: Int): Unit = {
-        writeSemaphore.release()
-        logger.error(s"CompletionHandler fail - $exc", exc)
-        p.tryFailure(exc)
+            override def failed(exc: Throwable, attachment: Int): Unit = {
+              writeSemaphore.release()
+              logger.error(s"CompletionHandler fail - $exc", exc)
+              p.tryFailure(exc)
+            }
+          })
+        } catch {
+          case _: ShutdownChannelGroupException | _: ClosedChannelException =>
+            socketClosed = true
+            closePromise.tryFailure(SocketClosedException(addressPair.toString))
+            writeSemaphore.release()
+          case NonFatal(e) =>
+            logger.warn("send fail ", e)
+            writeSemaphore.release()
+        }
       }
-    })
-
+    }
     p.future
-  }
+  }(execution.sendExecutor).flatten
 
   private def read(readAttach: Attachment): Future[Attachment] = {
     val p = Promise[Attachment]

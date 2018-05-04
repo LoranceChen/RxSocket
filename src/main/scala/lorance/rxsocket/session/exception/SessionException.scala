@@ -11,3 +11,5 @@ class ReadByteBufferException(msg: String) extends SessionException(msg)
 class ReadResultNegativeException(msg: String = "CompletedHandler return -1") extends ReadByteBufferException(msg)
 
 class TmpBufferOverLoadException(msg: String = "protocol length too long") extends SessionException(msg)
+
+case class SocketClosedException(msg: String) extends SessionException(msg)

@@ -2,7 +2,7 @@ package lorance.rxsocket.session
 
 import java.util.concurrent.{Executor, Executors}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 /**
   *
@@ -31,5 +31,9 @@ package object execution {
     }
 
     def reportFailure(t: Throwable) = {}
+  }
+
+  lazy val sendExecutor: ExecutionContextExecutor = {
+    ExecutionContext.fromExecutor(Executors.newScheduledThreadPool(15))
   }
 }
