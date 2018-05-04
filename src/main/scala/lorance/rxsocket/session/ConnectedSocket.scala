@@ -128,50 +128,52 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
   /**
     * it seems NOT support concurrent write, but NOT break reading.
     * after many times test, later write request will be ignored when
-    * under construct some write operation.
+    * some write operation not completed.
     *
-    * throw WritePendingException Unchecked exception thrown when an attempt is made to write to an asynchronous socket channel and a previous write has not completed.
-    *
-    * todo: send operation on separate thread pool, the thread pool hold all sockets block send operation.
+    * WritePendingException Unchecked exception thrown when an attempt is made to write to an asynchronous socket channel and a previous write has not completed.
     */
-  def send(data: ByteBuffer): Future[Unit] = Future{
+  def send(data: ByteBuffer): Future[Unit] = {
     val p = Promise[Unit]
 
-    if(socketClosed) {
-      p.tryFailure(SocketClosedException(addressPair.toString))
-    } else {
-      writeSemaphore.acquire()
-      if(socketClosed) {
+    //move block operation to thread pool
+    Future {
+      if (socketClosed) {
         p.tryFailure(SocketClosedException(addressPair.toString))
       } else {
-        logger.debug(s"send - {}", session.deCode(data.array()))
-        try {
-          socketChannel.write(data, 1, new CompletionHandler[Integer, Int] {
-            override def completed(result: Integer, attachment: Int): Unit = {
-              writeSemaphore.release()
-              logger.trace(s"result - $result")
-              p.trySuccess(Unit)
-            }
+        writeSemaphore.acquire()
+        if (socketClosed) {
+          p.tryFailure(SocketClosedException(addressPair.toString))
+        } else {
+          logger.debug(s"send - {}", session.deCode(data.array()))
+          try {
+            socketChannel.write(data, 1, new CompletionHandler[Integer, Int] {
+              override def completed(result: Integer, attachment: Int): Unit = {
+                writeSemaphore.release()
+                logger.trace(s"result - $result")
+                p.trySuccess(Unit)
+              }
 
-            override def failed(exc: Throwable, attachment: Int): Unit = {
+              override def failed(exc: Throwable, attachment: Int): Unit = {
+                writeSemaphore.release()
+                logger.error(s"CompletionHandler fail - $exc", exc)
+                p.tryFailure(exc)
+              }
+            })
+          } catch {
+            case _: ShutdownChannelGroupException | _: ClosedChannelException =>
+              socketClosed = true
+              closePromise.tryFailure(SocketClosedException(addressPair.toString))
               writeSemaphore.release()
-              logger.error(s"CompletionHandler fail - $exc", exc)
-              p.tryFailure(exc)
-            }
-          })
-        } catch {
-          case _: ShutdownChannelGroupException | _: ClosedChannelException =>
-            socketClosed = true
-            closePromise.tryFailure(SocketClosedException(addressPair.toString))
-            writeSemaphore.release()
-          case NonFatal(e) =>
-            logger.warn("send fail ", e)
-            writeSemaphore.release()
+            case NonFatal(e) =>
+              logger.warn("send fail ", e)
+              writeSemaphore.release()
+          }
         }
       }
-    }
+    }(execution.sendExecutor)
+
     p.future
-  }(execution.sendExecutor).flatten
+  }
 
   private def read(readAttach: Attachment): Future[Attachment] = {
     val p = Promise[Attachment]
