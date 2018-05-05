@@ -14,6 +14,7 @@ from `0.12.0`, only support Scala `2.12.x` and `2.11.x`
 - with RPC stream can get a pipe-like socket communicate.
 - Asynchronous & Non-blocking
 - Json based Server mode make it easy to build TCP service.
+- consume data with back-pressure
 
 ### Example
 - [simple example in test/demo directory](https://github.com/LoranceChen/RxSocket/tree/master/src/test/scala/demo)
@@ -23,9 +24,8 @@ from `0.12.0`, only support Scala `2.12.x` and `2.11.x`
 - No benchmark yet
 
 ### TODO
-- complete back-pressure mechanism [x]
 - custom protocol parser
  	- do like Erlang bit pattern match: `<<1::size(8), length::big-32, json::binary>>`
  	- DSL implement as http4s route match DSL
-- combine heartbeat timer task
-:: currently, every socket has heartbeat timer task which occupy many resource for scheduler.
+- combine heartbeat timer task  
+:: currently, every socket has heartbeat timer task which occupy many resource for scheduler if handle many socket.

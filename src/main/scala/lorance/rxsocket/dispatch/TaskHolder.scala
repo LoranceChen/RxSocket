@@ -131,7 +131,7 @@ class TaskHolder {
                 }
                 //ensure doesn't canceling after awake
                 if (!canceling) {//canceling is false - needn't canceling
-                var tempTask: Option[Task] = None // use the temp ref because do initStatus will lose the task
+                  var tempTask: Option[Task] = None // use the temp ref because do initStatus will lose the task
                   //action is sync if you want async,please do it yourself under execute()
                   action.foreach { t =>
                     tempTask = Some(t())
