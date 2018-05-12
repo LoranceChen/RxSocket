@@ -15,6 +15,7 @@ import lorance.rxsocket.session.implicitpkg._
 
 import scala.concurrent.duration.Duration
 import lorance.rxsocket.`implicit`.ObvsevableImplicit._
+import lorance.rxsocket.dispatch.Task
 import monix.execution.Ack.Continue
 import monix.reactive.Observable
 import monix.reactive.subjects.PublishSubject
@@ -154,16 +155,19 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
   (any: Req)
   (implicit mf: Manifest[Rsp]): Future[Rsp] = {
     val register = PublishSubject[JValue]
-    val taskId = presentation.getTaskId
+    val taskId = Task.getId
     this.addTask(taskId, register)
 
     val resultFur = register.map{s => s.extract[Rsp]}
-      .timeoutOnSlowDownstream(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS)).
-      future
+      .timeoutOnSlowUpstream(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS))
+      .future
 
     resultFur.onComplete({
-      case Failure(ex) => logger.error(s"[Throw] JProtocol.taskResult - $taskId", ex)
-      case Success(_) => this.removeTask(taskId)
+      case Failure(ex) =>
+        logger.error(s"[Throw] JProtocol.taskResult - $taskId", ex)
+        this.removeTask(taskId)
+      case Success(_) =>
+        this.removeTask(taskId)
     })
 
     //send msg after prepare stream
@@ -172,9 +176,11 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
       ("load" -> decompose(any))
 
     val bytes = JsonParse.enCode(mergeTaskId)
-    connectedSocket.send(ByteBuffer.wrap(bytes))
+    val sendFur = connectedSocket.send(ByteBuffer.wrap(bytes))
+    println(s"JProtocol.sendWithRsp resultFur - $any")
+//    resultFur
+    sendFur.flatMap(_ => resultFur)
 
-    resultFur
   }
 
   /**
@@ -184,7 +190,7 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
     */
   def sendWithStream[Req, Rsp](any: Req, additional: Option[Observable[Rsp] => Observable[Rsp]] = None)(implicit mf: Manifest[Rsp]) = {
     val register = PublishSubject[JValue]()
-    val taskId = presentation.getTaskId
+    val taskId = Task.getId
     this.addTask(taskId, register)
 
     val extract = register
@@ -205,9 +211,10 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
       ("taskId" -> taskId) ~
       ("load" -> decompose(any))
     val bytes = JsonParse.enCode(mergeTaskId)
-    connectedSocket.send(ByteBuffer.wrap(bytes))
-
-    resultStream.share
+    val sendFur = connectedSocket.send(ByteBuffer.wrap(bytes))
+    Observable.fromFuture(sendFur).flatMap(_ =>
+      resultStream.share
+    )
   }
 
 }
