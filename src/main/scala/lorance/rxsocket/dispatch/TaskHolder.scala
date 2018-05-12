@@ -6,6 +6,7 @@ import monix.reactive.subjects.PublishSubject
 import org.slf4j.LoggerFactory
 
 import concurrent.ExecutionContext.Implicits.global
+import scala.util.Try
 
 /**
   * execute need wait task, also replaced by new task.You can create multi Dispatch if you willing(eg. for preference)
@@ -110,6 +111,9 @@ class TaskHolder {
   private object Waiter extends Thread {
     setDaemon(true)
     setName("Thread-Waiter")
+    //todo: consider setting high priority
+//    setPriority(Thread.MAX_PRIORITY)
+
     override def run(): Unit = {
       logger.trace("Waiter thread begin to run")
       godLock.synchronized {
@@ -134,7 +138,7 @@ class TaskHolder {
                   var tempTask: Option[Task] = None // use the temp ref because do initStatus will lose the task
                   //action is sync if you want async,please do it yourself under execute()
                   action.foreach { t =>
-                    tempTask = Some(t())
+                    tempTask = Try(t()).toOption
                   } //execute action
                   logger.trace("executed action - ")
                   initStatus()
