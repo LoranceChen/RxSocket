@@ -35,15 +35,17 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
   private val closePromise = Promise[OnSocketCloseMsg]()
   private val readAttach = Attachment(ByteBuffer.allocate(Configration.READBUFFER_LIMIT), socketChannel)
 
-  @volatile private[session] var heartMilliTime: Long = System.currentTimeMillis()
+//  @volatile private[session] var heartMilliTime: Long = System.currentTimeMillis()
 
   @volatile private var socketClosed = false
+  def isSocketClosed: Boolean = socketClosed
+
   private val socketClosedLock = new Object
   @volatile private var closeReason: String = "normal close"
 
   private val formerSendLock = new Object
   @volatile private var formerSendFur = Future.successful(())
-  @volatile private var formerSendTimeoutPromise = Promise[Unit]()
+//  @volatile private var formerSendTimeoutPromise = Promise[Unit]()
 
   //a event register when socket disconnect
   val onDisconnected: Future[OnSocketCloseMsg] = closePromise.future
@@ -91,7 +93,7 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
     beginReading()
 
     readSubscribes
-      .asyncBoundary(OverflowStrategy.Default)
+      .asyncBoundary(OverflowStrategy.BackPressure(100))
       .doOnComplete(() => logger.debug("reading completed"))
       .doOnError(e => logger.warn("reading completed with error - ", e))
   }
@@ -99,18 +101,14 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
   private def beginReading() = {
     def beginReadingClosure(): Unit = {
       val readyFur = read(readAttach)
-      val handleTimeOut = if(isServer) {
-        readyFur.withTimeout(Configration.CHECK_HEART_BEAT_BREAKTIME seconds)
-      } else { //isClient: send a heartbeat
-        readyFur
-//          .withTimeout(Configration.SEND_HEART_BEAT_BREAKTIME).recoverWith{
-//          case FutureTimeoutException =>
-//            this.send(ByteBuffer.wrap(session.enCode(0.toByte, "heart beat")))
-//            readyFur
-//        }
-      }
+//      val handleTimeOut = if(isServer) {
+//        readyFur.withTimeout(Configration.CHECK_HEART_BEAT_BREAKTIME seconds)
+//      } else { //isClient: send a heartbeat
+//        readyFur
+//      }
 
-      handleTimeOut.onComplete{
+//      handleTimeOut.onComplete{
+      readyFur.onComplete{
         case Failure(f) =>
           f match {
             case e: ReadResultNegativeException =>
@@ -125,7 +123,7 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
           logger.trace(s"read position: ${src.position} bytes")
           readerDispatch.receive(src).foreach { protos: Vector[CompletedProto] =>
             logger.trace(s"dispatched protos - ${protos.map(p => p.loaded.array().string)}")
-            heartMilliTime = System.currentTimeMillis() //update time
+//            heartMilliTime = System.currentTimeMillis() //update time
 
             def publishProtoWithGoodHabit(leftProtos: Vector[CompletedProto]): Unit = {
               leftProtos.headOption match {
@@ -182,7 +180,7 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
     }else {
       formerSendLock.synchronized {
         // cancel wait
-        formerSendTimeoutPromise.trySuccess(Unit)
+//        formerSendTimeoutPromise.trySuccess(Unit)
 
         val curFur = formerSendFur.flatMap(_ => {
           val p = Promise[Unit]()
@@ -190,7 +188,7 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
             socketChannel.write(data, 1, new CompletionHandler[Integer, Int] {
               override def completed(result: Integer, attachment: Int): Unit = {
                 //            logger.trace(s"result - $result")
-                logger.info(s"send:write result - $result")
+//                logger.info(s"send:write result - $result")
                 p.trySuccess(Unit)
               }
 
@@ -199,14 +197,12 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
                   case _: ShutdownChannelGroupException | _: ClosedChannelException =>
                     logger.info(s"send:write fail -")
 
-//                    socketClosed = true
-                    disconnect(exc.toString)
                   case _ =>
                     logger.info(s"send:write fail -")
-                    disconnect(exc.toString)
                     Unit
                 }
                 logger.warn(s"CompletionHandler fail - $exc")
+                disconnect(exc.toString)
                 p.tryFailure(exc)
               }
             })
@@ -222,22 +218,24 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
           p.future
         }) //(session.execution.sendExecutor)
 
-        curFur.foreach(_ => {
-          //send heartbeat with timeout
-          val p = Promise[Unit]()
-          val f = p.future
-          f.withTimeout(Configration.SEND_HEART_BEAT_BREAKTIME).recoverWith{
-            case FutureTimeoutException =>
-              this.send(ByteBuffer.wrap(session.enCode(0.toByte, "heart beat")))
-              curFur
-          }
-
-          //update var
-          formerSendTimeoutPromise = p
-        })
-        val sendWithTimeout = curFur
-        formerSendFur = sendWithTimeout
-        sendWithTimeout
+//        curFur.foreach(_ => {
+//          //send heartbeat with timeout
+//          val p = Promise[Unit]()
+//          val f = p.future
+//          f.withTimeout(Configration.SEND_HEART_BEAT_BREAKTIME).recoverWith{
+//            case FutureTimeoutException =>
+//              this.send(ByteBuffer.wrap(session.enCode(0.toByte, "heart beat")))
+//              curFur
+//          }
+//
+//          //update var
+////          formerSendTimeoutPromise = p
+//        })
+//        val sendWithTimeout = curFur
+//        formerSendFur = sendWithTimeout
+//        sendWithTimeout
+        formerSendFur = curFur
+        curFur
       }
     }
   }

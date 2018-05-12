@@ -10,8 +10,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 case object FutureTimeoutException extends RuntimeException
 case object FutureTimeoutNotOccur extends RuntimeException
 
-class FutureEx[T](f: Future[T]) {
+object FutureEx {
   val timerManager = new TaskManager()
+
+}
+class FutureEx[T](f: Future[T]){
 
   private class FutureTimeoutTask[T](id: String, delayMilliTime: Long, promise: Promise[T]) extends Task {
     override val taskId: TaskKey = TaskKey(id, System.currentTimeMillis() + delayMilliTime)
@@ -31,7 +34,7 @@ class FutureEx[T](f: Future[T]) {
 
       val id = Task.getId
       //add time task to a scheduler
-      timerManager.addTask(new FutureTimeoutTask(id, ms, p))
+      FutureEx.timerManager.addTask(new FutureTimeoutTask(id, ms, p))
 //      Future {
 //
 //        blocking(Thread.sleep(ms))
@@ -44,12 +47,13 @@ class FutureEx[T](f: Future[T]) {
       f.onComplete(_ => {
         // 源Futrue完成之后，如果定时器Future没有完成，则取消定时器的调度工作
         if(!p.isCompleted) {
-          timerManager.cancelTask(id)
-          p.tryFailure(FutureTimeoutNotOccur)
+          FutureEx.timerManager.cancelTask(id)
+//          p.tryFailure(FutureTimeoutNotOccur)
         }
       })
       p.future
     }))
+
   }
 
   def withTimeout(duration: Duration)

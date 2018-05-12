@@ -16,6 +16,7 @@ import lorance.rxsocket.session.implicitpkg._
 import scala.concurrent.duration.Duration
 import lorance.rxsocket.`implicit`.ObvsevableImplicit._
 import lorance.rxsocket.dispatch.Task
+import lorance.rxsocket.session.exception.SocketClosedException
 import monix.execution.Ack.Continue
 import monix.reactive.Observable
 import monix.reactive.subjects.PublishSubject
@@ -133,13 +134,21 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
 
 
   def send(any: Any) = {
-    val bytes = JsonParse.enCode(any)
-    connectedSocket.send(ByteBuffer.wrap(bytes))
+    if(connectedSocket.isSocketClosed) {
+      Future.failed(SocketClosedException)
+    } else {
+      val bytes = JsonParse.enCode(any)
+      connectedSocket.send(ByteBuffer.wrap(bytes))
+    }
   }
 
   def send(jValue: JValue) = {
-    val bytes = JsonParse.enCode(jValue)
-    connectedSocket.send(ByteBuffer.wrap(bytes))
+    if(connectedSocket.isSocketClosed) {
+      Future.failed(SocketClosedException)
+    } else {
+      val bytes = JsonParse.enCode(jValue)
+      connectedSocket.send(ByteBuffer.wrap(bytes))
+    }
   }
 
   /**
@@ -154,33 +163,36 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
   def sendWithRsp[Req, Rsp]
   (any: Req)
   (implicit mf: Manifest[Rsp]): Future[Rsp] = {
-    val register = PublishSubject[JValue]
-    val taskId = Task.getId
-    this.addTask(taskId, register)
+    if(connectedSocket.isSocketClosed) {
+      Future.failed(SocketClosedException)
+    } else {
+      val register = PublishSubject[JValue]
+      val taskId = Task.getId
+      this.addTask(taskId, register)
 
-    val resultFur = register.map{s => s.extract[Rsp]}
-      .timeoutOnSlowUpstream(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS))
-      .future
+      val resultFur = register.map { s => s.extract[Rsp] }
+        .timeoutOnSlowUpstream(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS))
+        .future
 
-    resultFur.onComplete({
-      case Failure(ex) =>
-        logger.error(s"[Throw] JProtocol.taskResult - $taskId", ex)
-        this.removeTask(taskId)
-      case Success(_) =>
-        this.removeTask(taskId)
-    })
+      resultFur.onComplete({
+        case Failure(ex) =>
+          logger.error(s"[Throw] JProtocol.taskResult - $taskId", ex)
+          this.removeTask(taskId)
+        case Success(_) =>
+          this.removeTask(taskId)
+      })
 
-    //send msg after prepare stream
-    val mergeTaskId: JObject =
-      ("taskId" -> taskId) ~
-      ("load" -> decompose(any))
+      //send msg after prepare stream
+      val mergeTaskId: JObject =
+        ("taskId" -> taskId) ~
+          ("load" -> decompose(any))
 
-    val bytes = JsonParse.enCode(mergeTaskId)
-    val sendFur = connectedSocket.send(ByteBuffer.wrap(bytes))
-    println(s"JProtocol.sendWithRsp resultFur - $any")
-//    resultFur
-    sendFur.flatMap(_ => resultFur)
-
+      val bytes = JsonParse.enCode(mergeTaskId)
+      val sendFur = connectedSocket.send(ByteBuffer.wrap(bytes))
+      //    println(s"JProtocol.sendWithRsp resultFur - $any")
+      //    resultFur
+      sendFur.flatMap(_ => resultFur)
+    }
   }
 
   /**
@@ -189,32 +201,36 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
     * @param additional complete the stream ahead of time
     */
   def sendWithStream[Req, Rsp](any: Req, additional: Option[Observable[Rsp] => Observable[Rsp]] = None)(implicit mf: Manifest[Rsp]) = {
-    val register = PublishSubject[JValue]()
-    val taskId = Task.getId
-    this.addTask(taskId, register)
+    if (connectedSocket.isSocketClosed) {
+      Observable.raiseError(SocketClosedException)
+    } else {
+      val register = PublishSubject[JValue]()
+      val taskId = Task.getId
+      this.addTask(taskId, register)
 
-    val extract = register
-      .map{load =>
-      load.extract[Rsp]
+      val extract = register
+        .map { load =>
+          load.extract[Rsp]
+        }
+
+      val resultStream = additional.map(f => f(extract)).getOrElse(extract)
+        .timeoutOnSlowUpstream(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS))
+        .doOnError { e => logger.error(s"[Throw] JProtocol.taskResult - $any", e) }
+        .doOnComplete { () =>
+          this.removeTask(taskId)
+        }
+        .doOnEarlyStop(() => this.removeTask(taskId))
+
+      //send msg after prepare stream
+      val mergeTaskId =
+        ("taskId" -> taskId) ~
+          ("load" -> decompose(any))
+      val bytes = JsonParse.enCode(mergeTaskId)
+      val sendFur = connectedSocket.send(ByteBuffer.wrap(bytes))
+      Observable.fromFuture(sendFur).flatMap(_ =>
+        resultStream.share
+      )
     }
-
-    val resultStream = additional.map(f => f(extract)).getOrElse(extract)
-      .timeoutOnSlowUpstream(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS))
-      .doOnError { e => logger.error(s"[Throw] JProtocol.taskResult - $any", e) }
-      .doOnComplete{ () =>
-        this.removeTask(taskId)
-      }
-      .doOnEarlyStop(() => this.removeTask(taskId))
-
-    //send msg after prepare stream
-    val mergeTaskId =
-      ("taskId" -> taskId) ~
-      ("load" -> decompose(any))
-    val bytes = JsonParse.enCode(mergeTaskId)
-    val sendFur = connectedSocket.send(ByteBuffer.wrap(bytes))
-    Observable.fromFuture(sendFur).flatMap(_ =>
-      resultStream.share
-    )
   }
 
 }

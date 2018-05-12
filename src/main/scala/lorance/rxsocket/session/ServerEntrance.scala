@@ -31,7 +31,7 @@ class ServerEntrance(host: String, port: Int) {
   }
 
   //todo: consider use pool for ton of socket
-  private val heatBeatsManager = new TaskManager()
+//  private val heatBeatsManager = new TaskManager()
 
   /**
     * listen connection and emit every times connects event.
@@ -68,6 +68,7 @@ class ServerEntrance(host: String, port: Int) {
   //          logger.trace(s"add heart beat to mananger - $sendHeartTask; $checkHeartTask")
 //          heatBeatsManager.addTask(checkHeartTask)
 
+          //todo connect setting back-pressure
           connectionSubs.onNext(connectedSocket)
 
           val nextConn = connection(server)

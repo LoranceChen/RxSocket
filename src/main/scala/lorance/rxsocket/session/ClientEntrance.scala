@@ -19,7 +19,7 @@ class ClientEntrance(remoteHost: String, remotePort: Int) {
   val channel: AsynchronousSocketChannel = AsynchronousSocketChannel.open
   val serverAddr: SocketAddress = new InetSocketAddress(remoteHost, remotePort)
 
-  private val heartBeatManager = new TaskManager()
+//  private val heartBeatManager = new TaskManager()
 
   def connect: Future[ConnectedSocket] = {
     val p = Promise[ConnectedSocket]
@@ -56,6 +56,6 @@ class ClientEntrance(remoteHost: String, remotePort: Int) {
       * 之前想到测试的方式是将服务端的端口绑定好ip地址,但不执行监听行为,但是就算这样,客户端依然认为是连接成功.
       */
     p.future
-     .withTimeout(Configration.CONNECT_TIME_LIMIT * 1000)
+//     .withTimeout(Configration.CONNECT_TIME_LIMIT * 1000)
   }
 }
