@@ -125,7 +125,7 @@ class JProtoServer(jProtos: Observable[JProtocol], routes: List[Router]) {
                   ("type" -> "stream") ~
                   ("status" -> "end")
 
-              val rst: Future[Ack] = skt.send(finalJson).flatMap(_ => Continue)
+              skt.send(finalJson)
 
               promise.tryCompleteWith(Continue)
               Unit
@@ -140,4 +140,5 @@ class JProtoServer(jProtos: Observable[JProtocol], routes: List[Router]) {
 
     Continue
   }
+
 }
