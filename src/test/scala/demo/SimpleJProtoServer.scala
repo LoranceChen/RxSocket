@@ -1,5 +1,7 @@
 package demo
 
+import java.lang.management.ManagementFactory
+
 import lorance.rxsocket.presentation.json.{IdentityTask, JProtocol}
 import lorance.rxsocket.session.ServerEntrance
 import monix.execution.Ack.Continue
@@ -11,14 +13,26 @@ import monix.execution.Scheduler.Implicits.global
   * Json presentation Example
   */
 object SimpleJProtoServer extends App {
+
+
+  val runtime = ManagementFactory.getRuntimeMXBean()
+  val name = runtime.getName()
+  System.out.println("当前进程的标识为："+name)
+  val index = name.indexOf("@")
+  if (index != -1) {
+    val pid = Integer.parseInt(name.substring(0, index))
+    System.out.println("当前进程的PID为："+pid)
+  }
+
+
   val socket = new ServerEntrance("127.0.0.1", 10011).listen
 
   val jprotoSocket = socket.map(connection => new JProtocol(connection, connection.startReading))
 
   case class Response(result: Option[String], taskId: String) extends IdentityTask
 
-  jprotoSocket.subscribe { s =>
-    s.jRead.subscribe{ j =>
+  val  x = jprotoSocket.subscribe { s =>
+    val xx =  s.jRead.subscribe{ j =>
       println(s"GET_INFO - ${ compact(render(j))}")
       Thread.sleep(1000)
       val JString(tskId) = j \ "taskId" //assume has taskId for simplify
@@ -29,8 +43,22 @@ object SimpleJProtoServer extends App {
       Continue
     }
 
+    s.connectedSocket.onDisconnected.foreach(_ => xx.cancel() )
     Continue
   }
+
+  object GcThread extends Thread {
+    override def run(): Unit = {
+      while(true) {
+        Thread.sleep(10000)
+        println("do gc")
+        System.gc()
+
+      }
+    }
+  }
+
+  GcThread.start()
 
   Thread.currentThread().join()
 }

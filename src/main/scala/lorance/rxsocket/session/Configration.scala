@@ -30,6 +30,6 @@ object Configration {
 
   var CONNECT_TIME_LIMIT = 10 // second
 
-  var SEND_HEART_BEAT_BREAKTIME = 30 //second
-  var CHECK_HEART_BEAT_BREAKTIME = 60 // Should large then SEND_HEART_BEAT_BREAKTIME
+//  var SEND_HEART_BEAT_BREAKTIME = 30 //second
+//  var CHECK_HEART_BEAT_BREAKTIME = 60 // Should large then SEND_HEART_BEAT_BREAKTIME
 }

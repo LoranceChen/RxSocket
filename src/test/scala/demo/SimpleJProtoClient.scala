@@ -1,5 +1,7 @@
 package demo
 
+import java.lang.management.ManagementFactory
+
 import lorance.rxsocket.presentation.json.JProtocol
 import lorance.rxsocket.session.ClientEntrance
 import monix.execution.Ack.Continue
@@ -12,6 +14,18 @@ import monix.execution.Scheduler.Implicits.global
   * Json presentation Example
   */
 object SimpleJProtoClient extends App {
+
+
+  val runtime = ManagementFactory.getRuntimeMXBean()
+  val name = runtime.getName()
+  System.out.println("当前进程的标识为："+name)
+  val index = name.indexOf("@")
+  if (index != -1) {
+    val pid = Integer.parseInt(name.substring(0, index))
+    System.out.println("当前进程的PID为："+pid)
+  }
+
+
   val client = new ClientEntrance("localhost", 10011).connect
   val jproto = client.map { x => new JProtocol(x, x.startReading) }
 
