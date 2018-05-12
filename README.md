@@ -6,7 +6,7 @@ Reactive programming has a important concept of stream which allow application s
 ### SBT Usage
 From `v0.12.0`, RxSocket only support Scala `2.12.x` and `2.11.x`
 ```
-"com.scalachan" %% "rxsocket" % "0.12.0"
+"com.scalachan" %% "rxsocket" % "0.12.1"
 ```
 
 ### Feature
@@ -19,13 +19,8 @@ From `v0.12.0`, RxSocket only support Scala `2.12.x` and `2.11.x`
 ### Example
 - [simple example in test/demo directory](https://github.com/LoranceChen/RxSocket/tree/master/src/test/scala/demo)
 
-### Not good parts
-- lack of monitor for net status
-- No benchmark yet
-
 ### TODO
 - custom protocol parser
- 	- do like Erlang bit pattern match: `<<1::size(8), length::big-32, json::binary>>`
- 	- DSL implement as http4s route match DSL
-- combine heartbeat timer task  
-:: currently, every socket has heartbeat timer task which occupy many resource for scheduler if handle many socket.
+- support heartbeat
+- add monitor for net status
+- add benchmark
