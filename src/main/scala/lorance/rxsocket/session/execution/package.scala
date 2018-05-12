@@ -33,7 +33,18 @@ package object execution {
     def reportFailure(t: Throwable) = {}
   }
 
-  lazy val sendExecutor: ExecutionContextExecutor = {
-    ExecutionContext.fromExecutor(Executors.newScheduledThreadPool(15))
-  }
+//  private[session] lazy val sendExecutor: ExecutionContextExecutor = {
+//    val cpus = Runtime.getRuntime.availableProcessors
+//    ExecutionContext.fromExecutor(Executors.newScheduledThreadPool(cpus * 2))
+//  }
+
+//  private[session] lazy implicit val readExecutor: ExecutionContextExecutor = {
+//    val cpus = Runtime.getRuntime.availableProcessors
+//    ExecutionContext.fromExecutor(Executors.newWorkStealingPool(cpus * 2))
+//  }
+
+//  private[session] lazy val waitExecutor: ExecutionContextExecutor = {
+//    val cpus = Runtime.getRuntime.availableProcessors
+//    ExecutionContext.fromExecutor(Executors.newWorkStealingPool(cpus * 2))
+//  }
 }

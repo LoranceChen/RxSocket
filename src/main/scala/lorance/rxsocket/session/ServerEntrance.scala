@@ -1,10 +1,11 @@
 package lorance.rxsocket.session
 
-import java.net.InetSocketAddress
-import java.nio.channels.{AsynchronousServerSocketChannel, AsynchronousSocketChannel, CompletionHandler}
+import java.net.{InetSocketAddress, StandardSocketOptions}
+import java.nio.channels.{AsynchronousChannelGroup, AsynchronousServerSocketChannel, AsynchronousSocketChannel, CompletionHandler}
+import java.util.concurrent.Executors
 
 import org.slf4j.LoggerFactory
-import lorance.rxsocket.dispatch.{TaskKey, TaskManager}
+import lorance.rxsocket.dispatch.TaskManager
 import monix.reactive.Observable
 import monix.reactive.subjects.PublishSubject
 
@@ -20,12 +21,16 @@ class ServerEntrance(host: String, port: Int) {
   val socketAddress: InetSocketAddress = new InetSocketAddress(host, port)
 
   val server: AsynchronousServerSocketChannel = {
-    val server = AsynchronousServerSocketChannel.open
+    val cpus = Runtime.getRuntime.availableProcessors
+    val x = AsynchronousChannelGroup.withThreadPool(Executors.newWorkStealingPool(cpus * 2))
+
+    val server = AsynchronousServerSocketChannel.open(x)
     val prepared = server.bind(socketAddress)
     logger.info(s"server is bind at - $socketAddress")
     prepared
   }
 
+  //todo: consider use pool for ton of socket
   private val heatBeatsManager = new TaskManager()
 
   /**
@@ -35,9 +40,7 @@ class ServerEntrance(host: String, port: Int) {
     logger.info(s"server start listening at - $socketAddress")
     connectForever()
 
-    val hot = connectionSubs.publish
-    hot.connect
-    hot
+    connectionSubs
   }
 
   private def connectForever() = {
@@ -49,24 +52,21 @@ class ServerEntrance(host: String, port: Int) {
         case Failure(e) =>
           logger.warn("connection set up fail", e)
         case Success(c) =>
-          val connectedSocket = new ConnectedSocket(c, heatBeatsManager,
-            AddressPair(c.getLocalAddress.asInstanceOf[InetSocketAddress], c.getRemoteAddress.asInstanceOf[InetSocketAddress]))
+          val connectedSocket = new ConnectedSocket(c,
+//            heatBeatsManager,
+            AddressPair(c.getLocalAddress.asInstanceOf[InetSocketAddress], c.getRemoteAddress.asInstanceOf[InetSocketAddress]),
+            true
+          )
           logger.info(s"client connected - ${connectedSocket.addressPair.remote}")
 
-          val sendHeartTask = new HeartBeatSendTask(
-            TaskKey(connectedSocket.addressPair.remote + ".SendHeartBeat", System.currentTimeMillis() + Configration.SEND_HEART_BEAT_BREAKTIME * 1000L),
-            Some(-1, Configration.SEND_HEART_BEAT_BREAKTIME * 1000L),
-            connectedSocket
-          )
-          val checkHeartTask = new HeartBeatCheckTask(
-            TaskKey(connectedSocket.addressPair.remote + ".CheckHeartBeat", System.currentTimeMillis() + Configration.CHECK_HEART_BEAT_BREAKTIME * 1000L),
-            Some(-1, Configration.CHECK_HEART_BEAT_BREAKTIME * 1000L),
-            connectedSocket
-          )
+//          val checkHeartTask = new HeartBeatCheckTask(
+//            TaskKey(connectedSocket.addressPair.remote + ".CheckHeartBeat", System.currentTimeMillis() + Configration.CHECK_HEART_BEAT_BREAKTIME * 1000L),
+//            Some(-1, Configration.CHECK_HEART_BEAT_BREAKTIME * 1000L),
+//            connectedSocket
+//          )
 
-          logger.trace(s"add heart beat to mananger - $sendHeartTask; $checkHeartTask")
-          heatBeatsManager.addTask(sendHeartTask)
-          heatBeatsManager.addTask(checkHeartTask)
+  //          logger.trace(s"add heart beat to mananger - $sendHeartTask; $checkHeartTask")
+//          heatBeatsManager.addTask(checkHeartTask)
 
           connectionSubs.onNext(connectedSocket)
 
@@ -89,8 +89,14 @@ class ServerEntrance(host: String, port: Int) {
         p.tryFailure(exc)
       }
     }
-
+    // scala.Boolean vs java.lang.Boolean:
+    // https://stackoverflow.com/questions/25665379/calling-java-generic-function-from-scala?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
+    server.setOption[java.lang.Boolean](StandardSocketOptions.SO_REUSEADDR, true)
+    // not support yet
+    //    server.setOption[java.lang.Integer](StandardSocketOptions.SO_LINGER, 3)
+    //    server.setOption[java.lang.Boolean](StandardSocketOptions.SO_KEEPALIVE, true)
     server.accept(server, callback)
     p.future
   }
+
 }

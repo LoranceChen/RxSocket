@@ -28,8 +28,8 @@ object Configration {
     */
   var PACKAGE_CONTEXT_LENGTH = Int.MaxValue
 
-  var CONNECT_TIME_LIMIT = 7 // second
+  var CONNECT_TIME_LIMIT = 10 // second
 
   var SEND_HEART_BEAT_BREAKTIME = 30 //second
-  var CHECK_HEART_BEAT_BREAKTIME = 40 // Should large then SEND_HEART_BEAT_BREAKTIME
+  var CHECK_HEART_BEAT_BREAKTIME = 60 // Should large then SEND_HEART_BEAT_BREAKTIME
 }
