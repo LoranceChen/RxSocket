@@ -6,7 +6,7 @@ Reactive programming has a important concept of stream which allow application s
 ### SBT Usage
 From `v0.12.0`, RxSocket only support Scala `2.12.x` and `2.11.x`
 ```
-"com.scalachan" %% "rxsocket" % "0.12.1"
+"com.scalachan" %% "rxsocket" % "0.12.2"
 ```
 
 ### Feature
@@ -23,4 +23,4 @@ From `v0.12.0`, RxSocket only support Scala `2.12.x` and `2.11.x`
 - custom protocol parser
 - support heartbeat
 - add monitor for net status
-- add benchmark
+- better benchmark
