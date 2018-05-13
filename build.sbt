@@ -1,4 +1,4 @@
-version := "0.12.2"
+version := "0.12.3-SNAPSHOT"
 
 name := "rxsocket"
 
@@ -32,8 +32,8 @@ publishTo := {
 
 
 libraryDependencies ++= Seq(
-  "io.monix" %% "monix" % "3.0.0-M3",
-  "org.json4s" %% "json4s-native" % "3.6.0-M2",
+  "io.monix" %% "monix" % "3.0.0-RC1",
+  "org.json4s" %% "json4s-native" % "3.6.0-M3",
   "org.slf4j" % "slf4j-api" % "1.7.25",
   "ch.qos.logback" % "logback-classic" % "1.2.3" % Test,
   "junit" % "junit" % "4.12" % Test,
