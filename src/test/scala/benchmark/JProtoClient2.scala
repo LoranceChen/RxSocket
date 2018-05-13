@@ -4,13 +4,16 @@ import java.lang.management.ManagementFactory
 
 import lorance.rxsocket.presentation.json.JProtocol
 import lorance.rxsocket.session.ClientEntrance
-import org.slf4j.LoggerFactory
 import monix.execution.Scheduler.Implicits.global
 import monix.execution.atomic.AtomicInt
+import org.slf4j.LoggerFactory
 
 import scala.util.{Failure, Success}
 
-object JProtoClient extends App {
+/**
+  * different with JProtoClient, there is not Atomic count
+  */
+object JProtoClient2 extends App {
   val logger = LoggerFactory.getLogger(getClass)
 
 //  lorance.rxsocket.session.Configration.CHECK_HEART_BEAT_BREAKTIME = Int.MaxValue
@@ -28,8 +31,8 @@ object JProtoClient extends App {
 
 
   case class OverviewReq(id: Int)//, taskId: String = "blog/index/overview")// extends IdentityTask
-  case class OverviewRsp(result: Option[OverviewContent])//, taskId: String)// extends IdentityTask
-  case class OverviewContent(id: Int)
+  case class OverviewRsp(id: Int)//, taskId: String)// extends IdentityTask
+//  case class OverviewContent(id: Int)
 
   val client = new ClientEntrance("localhost", 10011)
   val connect = client.connect
@@ -50,7 +53,7 @@ object JProtoClient extends App {
     }
   }
 
-  val atomCountWarmup = AtomicInt(1)
+//  val atomCountWarmup = AtomicInt(1)
 
   logger.info(s"begin send 1000 times for make jvm hot =============")
   val testBeginTime = System.currentTimeMillis()
@@ -59,9 +62,9 @@ object JProtoClient extends App {
 //    logger.info(s"send request - ha$i")
     get(i)
       .foreach(x => {
-      val count = atomCountWarmup.getAndIncrement()
+//      val count = atomCountWarmup.getAndIncrement()
 //      logger.info(s"get response - $x, $count")
-      if(count == testNumber) {
+      if(x.id == testNumber) {
         println(s"warmup send $testNumber request-response use time total: ${System.currentTimeMillis() - testBeginTime} ms")
         println(s"warmup send $testNumber request-response use time QPS: ${testNumber * 1000 / (System.currentTimeMillis() - testBeginTime)}")
       }
@@ -70,7 +73,7 @@ object JProtoClient extends App {
 
   Thread.sleep(1000 * 10)
 
-  val atomCount = AtomicInt(1)
+//  val atomCount = AtomicInt(1)
 
   /**
     * scala> (1504661141248L - 1504661140886L ) / 3000.0F
@@ -82,9 +85,9 @@ object JProtoClient extends App {
   for(i <- 1 to toNumber) {
 //    logger.info(s"send request - ha$i")
     get(i).foreach(x => {
-      val count = atomCount.getAndIncrement()
+//      val count = atomCount.getAndIncrement()
 //      logger.info(s"get response - $x, $count")
-      if(count == toNumber) {
+      if(x.id == toNumber) {
         println(s"send $toNumber request-response use time total: ${System.currentTimeMillis() - beginTime} ms")
         println(s"send $toNumber request-response use time QPS: ${toNumber * 1000 / (System.currentTimeMillis() - beginTime)}")
       }

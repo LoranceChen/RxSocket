@@ -1,9 +1,8 @@
 package benchmark
 
-import lorance.rxsocket.presentation.json.{IdentityTask, JProtocol}
+import lorance.rxsocket.presentation.json.JProtocol
 import lorance.rxsocket.session.ServerEntrance
 import monix.execution.Ack.Continue
-import org.json4s.JObject
 import org.slf4j.LoggerFactory
 import monix.execution.Scheduler.Implicits.global
 import java.lang.management.ManagementFactory
@@ -29,18 +28,13 @@ object JProtoServer extends App {
 
   val readerJProt = readX.map(cx => new JProtocol(cx._1, cx._2))
 
-  case class OverviewRsp(result: Option[OverviewContent], taskId: String) extends IdentityTask
-  case class OverviewContent(id: String)
+  case class OverviewRsp(id: Int, taskId: String)
 
   readerJProt.subscribe { jproto =>
     jproto.jRead.subscribe { j =>
-      val jo = j.asInstanceOf[JObject]
-      val tsk = jo.\("taskId").values.toString
-//      logger.info(s"get data - $tsk")
-
-      jproto.send(OverviewRsp(Some(OverviewContent("id")), tsk))
-//      logger.info(s"sent data - $tsk")
-      Continue
+      //echo
+//      logger.info(s"sent data - $j")
+      jproto.send(j).flatMap(_ => Continue)
     }
 
     Continue
