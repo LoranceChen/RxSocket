@@ -51,16 +51,26 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
   }
 
   /**
-    * two module support:
-    * 1. has type field:
+    * inner json subscribe which parse json format as this:
+    * 1. simple dispatch mode
+    * {
+    *   taskId: ...
+    *   load: ...
+    * }
+    *
+    * 2. has type field:
     * this subscription distinct different JProtocols with type field.
     * type == once: response message only once
     * type == stream: response message multi-times.
+    * {
+    *   taskId:..
+    *   type: ...
+    *   load: ...
+    * }
+    * two module support:
+
     *
-    * 2. not type field
-    * use simple dispatch mode
-    *
-    * TODO: this place should be scalable.
+    * TODO: this place should be scalable(move off JProtocol).
     */
   jRead.subscribe{jsonRsp =>
     try{
@@ -78,8 +88,9 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
       jsonRsp \ "type" match {
         case JNothing =>
           val subj = this.getTask(taskId)
+          val load = jsonRsp \ "load"
           subj.foreach{
-            _.onNext(jsonRsp)
+            _.onNext(load)
           }
         case JString(typ) =>
           typ match {
@@ -170,7 +181,7 @@ class JProtocol(val connectedSocket: ConnectedSocket, read: Observable[Completed
       val taskId = Task.getId
       this.addTask(taskId, register)
 
-      val resultFur = register.map { s => s.extract[Rsp] }
+      val resultFur = register.map { s => s.extract[Rsp]}
         .timeoutOnSlowUpstream(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS))
         .future
 
