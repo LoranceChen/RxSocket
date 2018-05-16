@@ -9,18 +9,19 @@ From `v0.12.0`, RxSocket only support Scala `2.12.x` and `2.11.x`
 "com.scalachan" %% "rxsocket" % "0.12.2"
 ```
 
-### Feature
+### Features
 - do logic with reactive style with `Observable` and `Future`
 - with RPC stream can get a pipe-like socket communicate.
 - Asynchronous & Non-blocking
 - Json based Server mode make it easy to build TCP service.
 - consume data with back-pressure
+- custom protocol parser which could be active mode or passive mode
 
 ### Example
 - [simple example in test/demo directory](https://github.com/LoranceChen/RxSocket/tree/master/src/test/scala/demo)
+- [simple benchmark in test/benchmark directory](https://github.com/LoranceChen/RxSocket/tree/master/src/test/scala/benchmark)
 
 ### TODO
-- custom protocol parser
 - support heartbeat
 - add monitor for net status
 - better benchmark
