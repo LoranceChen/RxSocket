@@ -4,7 +4,7 @@ import java.lang.management.ManagementFactory
 import java.util.concurrent.Executors
 
 import lorance.rxsocket.presentation.json.JProtocol
-import lorance.rxsocket.session.ClientEntrance
+import lorance.rxsocket.session.{ClientEntrance, CommActiveParser}
 import monix.execution.Scheduler.Implicits.global
 import monix.execution.atomic.AtomicInt
 import org.slf4j.LoggerFactory
@@ -34,7 +34,7 @@ object JProtoClientMultiConnection extends App {
   case class OverviewContent(id: String)
 
   def testOne(testCount: Int, count: Int, atomCount: AtomicInt, benchmarkMaxCount: Int, beginTime: Long) = {
-    val client = new ClientEntrance("localhost", 10011)
+    val client = new ClientEntrance("localhost", 10011, new CommActiveParser())
     val connect = client.connect
     connect.onComplete {
       case Failure(f) => logger.info(s"connect fail - $f")

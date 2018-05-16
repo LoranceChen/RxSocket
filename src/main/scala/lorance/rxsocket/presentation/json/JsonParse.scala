@@ -3,6 +3,7 @@ package lorance.rxsocket.presentation.json
 import java.nio.charset.StandardCharsets
 
 import org.json4s.JValue
+import org.json4s.JsonDSL._
 import org.json4s._
 import org.json4s.Extraction._
 import org.json4s.native.JsonMethods._
@@ -27,6 +28,14 @@ object JsonParse {
     session.enCode(1.toByte, jStr)
   }
 
+  def enCodeWithTaskId(jValue: JValue, taskId: String): Array[Byte] = {
+    enCode(("taskId" -> taskId) ~ ("load" -> jValue))
+  }
+  def enCodeWithTaskId(obj: Any, taskId: String): Array[Byte] = {
+    enCode(("taskId" -> taskId) ~ ("load" -> decompose(obj)))
+  }
+
+
   def deCode[A](jValue: JValue)(implicit mf: scala.reflect.Manifest[A]): A = {
     jValue.extract[A]
   }
@@ -38,4 +47,6 @@ object JsonParse {
   def deCode[A](jsonArray: Array[Byte])(implicit mf: scala.reflect.Manifest[A]): A = {
     deCode(parse(new String(jsonArray, StandardCharsets.UTF_8)))
   }
+
+
 }

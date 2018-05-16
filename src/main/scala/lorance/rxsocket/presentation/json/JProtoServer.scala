@@ -59,14 +59,14 @@ class JProtoServer(jProtos: Observable[JProtocol], routes: List[Router]) {
                   ("type" -> "once") ~
                   ("status" -> "error") ~
                   ("load" -> e.getStackTrace.toString)
-              skt.send(finalJson).flatMap(_ => Continue)
+              skt.sendRaw(finalJson).flatMap(_ => Continue)
             case Success(rst) =>
               val finalJson =
                 ("taskId" -> taskId) ~
                   ("type" -> "once") ~
                   ("status" -> "end") ~
                   ("load" -> rst)
-              skt.send(finalJson).flatMap(_ => Continue)
+              skt.sendRaw(finalJson).flatMap(_ => Continue)
           }
           rst
         case FurEndPoint(jValRstFur) =>
@@ -77,7 +77,7 @@ class JProtoServer(jProtos: Observable[JProtocol], routes: List[Router]) {
                 ("type" -> "once") ~
                 ("status" -> "end") ~
                 ("load" -> jValRst)
-            p.tryCompleteWith(skt.send(finalJson))
+            p.tryCompleteWith(skt.sendRaw(finalJson))
 
           })
           jValRstFur.failed.map { error =>
@@ -88,7 +88,7 @@ class JProtoServer(jProtos: Observable[JProtocol], routes: List[Router]) {
                 ("type" -> "once") ~
                 ("status" -> "error") ~
                 ("load" -> error.getStackTrace.mkString)
-            p.tryCompleteWith(skt.send(finalJson))
+            p.tryCompleteWith(skt.sendRaw(finalJson))
           }
 
           val rst: Future[Ack] = p.future.flatMap(_ => Continue)
@@ -99,22 +99,22 @@ class JProtoServer(jProtos: Observable[JProtocol], routes: List[Router]) {
             event => {
               val finalJson: JValue =
                 ("taskId" -> taskId) ~
-                  ("type" -> "stream") ~
-                  ("status" -> "on") ~
-                  ("load" -> event)
+                ("type" -> "stream") ~
+                ("status" -> "on") ~
+                ("load" -> event)
 
               //this stream i
-              skt.send(finalJson).flatMap(_ => Continue)
+              skt.sendRaw(finalJson).flatMap(_ => Continue)
             },
             error => {
               logger.error("StreamEndPoint failed:", error)
               val finalJson: JValue =
                 ("taskId" -> taskId) ~
-                  ("type" -> "stream") ~
-                  ("status" -> "error") ~
-                  ("load" -> error.getStackTrace.mkString)
+                ("type" -> "stream") ~
+                ("status" -> "error") ~
+                ("load" -> error.getStackTrace.mkString)
 
-              val rst: Future[Ack] = skt.send(finalJson).flatMap(_ => Continue)
+              val rst: Future[Ack] = skt.sendRaw(finalJson).flatMap(_ => Continue)
 
               promise.tryCompleteWith(Continue)
               Unit
@@ -122,10 +122,10 @@ class JProtoServer(jProtos: Observable[JProtocol], routes: List[Router]) {
             () => {
               val finalJson: JValue =
                 ("taskId" -> taskId) ~
-                  ("type" -> "stream") ~
-                  ("status" -> "end")
+                ("type" -> "stream") ~
+                ("status" -> "end")
 
-              skt.send(finalJson)
+              skt.sendRaw(finalJson)
 
               promise.tryCompleteWith(Continue)
               Unit

@@ -23,14 +23,15 @@ import scala.concurrent.duration._
 case class AddressPair(local: InetSocketAddress, remote: InetSocketAddress)
 case class OnSocketCloseMsg(addressPair: AddressPair, reason: String)
 
-class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
+class ConnectedSocket[Proto](socketChannel: AsynchronousSocketChannel,
 //                      heartBeatsManager: TaskManager,
                       val addressPair: AddressPair,
-                      isServer: Boolean) {
+                      isServer: Boolean,
+                      protoParser: ProtoParser[Proto]) {
   private val logger = LoggerFactory.getLogger(getClass)
 
-  private val readerDispatch = new ReaderDispatch()
-  private val readSubscribes = PublishSubject[CompletedProto]
+//  private val protoParser = new ReaderDispatch()
+  private val readSubscribes = PublishSubject[Proto]
 
   private val closePromise = Promise[OnSocketCloseMsg]()
   private val readAttach = Attachment(ByteBuffer.allocate(Configration.READBUFFER_LIMIT), socketChannel)
@@ -87,7 +88,7 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
     closePromise.future
   }
 
-  lazy val startReading: Observable[CompletedProto] = {
+  lazy val startReading: Observable[Proto] = {
     logger.debug(s"beginReading - ")
 
     beginReading()
@@ -101,13 +102,7 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
   private def beginReading() = {
     def beginReadingClosure(): Unit = {
       val readyFur = read(readAttach)
-//      val handleTimeOut = if(isServer) {
-//        readyFur.withTimeout(Configration.CHECK_HEART_BEAT_BREAKTIME seconds)
-//      } else { //isClient: send a heartbeat
-//        readyFur
-//      }
 
-//      handleTimeOut.onComplete{
       readyFur.onComplete{
         case Failure(f) =>
           f match {
@@ -121,39 +116,29 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
         case Success(c) =>
           val src = c.byteBuffer
           logger.trace(s"read position: ${src.position} bytes")
-          readerDispatch.receive(src).foreach { protos: Vector[CompletedProto] =>
-            logger.trace(s"dispatched protos - ${protos.map(p => p.loaded.array().string)}")
-//            heartMilliTime = System.currentTimeMillis() //update time
+          val protos = protoParser.receive(src)
+          logger.trace(s"get protocols - $protos")
 
-            def publishProtoWithGoodHabit(leftProtos: Vector[CompletedProto]): Unit = {
-              leftProtos.headOption match {
-                case None => //send all proto
-                  beginReadingClosure() //read socket message
-                case Some(proto) => //has some proto not send complete
-                  //filter heart beat proto
-                  logger.trace(s"completed proto - $proto")
+          def publishProtoWithGoodHabit(leftProtos: Vector[Proto]): Unit = {
+            leftProtos.headOption match {
+              case None =>
+                beginReadingClosure() //read socket message
+              case Some(proto) => //has some proto not send complete
+                logger.trace(s"completed proto - $proto")
 
-                  if (proto.uuid == 0.toByte) {
-                    //update heart beat time
-                    logger.debug(s"get heart beat - $proto")
-//                    heartMilliTime = System.currentTimeMillis()
-
+                readSubscribes.onNext(proto).map {
+                  case Continue =>
                     publishProtoWithGoodHabit(leftProtos.tail)
-                  } else {
-                    readSubscribes.onNext(proto).map {
-                      case Continue =>
-                        publishProtoWithGoodHabit(leftProtos.tail)
-                        Continue
-                      case Stop =>
-                        Stop
-                    }//(session.execution.readExecutor)
-                  }
-              }
-
+                    Continue
+                  case Stop =>
+                    Stop
+                }
             }
 
-            publishProtoWithGoodHabit(protos)
+//            publishProtoWithGoodHabit(protos)
           }
+
+          publishProtoWithGoodHabit(protos)
 //            protos.foreach{proto =>
 //              //filter heart beat proto
 //              logger.trace(s"completed proto - $proto")
@@ -187,7 +172,7 @@ class ConnectedSocket(socketChannel: AsynchronousSocketChannel,
           try {
             socketChannel.write(data, 1, new CompletionHandler[Integer, Int] {
               override def completed(result: Integer, attachment: Int): Unit = {
-                //            logger.trace(s"result - $result")
+                logger.trace(s"ConnectedSocket.send result - $result")
 //                logger.info(s"send:write result - $result")
                 p.trySuccess(Unit)
               }

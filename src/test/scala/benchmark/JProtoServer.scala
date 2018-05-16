@@ -1,7 +1,7 @@
 package benchmark
 
 import lorance.rxsocket.presentation.json.JProtocol
-import lorance.rxsocket.session.ServerEntrance
+import lorance.rxsocket.session.{CommActiveParser, CommPassiveParser, ServerEntrance}
 import monix.execution.Ack.Continue
 import org.slf4j.LoggerFactory
 import monix.execution.Scheduler.Implicits.global
@@ -23,7 +23,8 @@ object JProtoServer extends App {
   //  lorance.rxsocket.session.Configration.CHECK_HEART_BEAT_BREAKTIME = Int.MaxValue
 //  lorance.rxsocket.session.Configration.SEND_HEART_BEAT_BREAKTIME = Int.MaxValue
 
-  val conntected = new ServerEntrance("127.0.0.1", 10011).listen
+//  val conntected = new ServerEntrance("127.0.0.1", 10011, new CommActiveParser()).listen
+  val conntected = new ServerEntrance("127.0.0.1", 10011, new CommPassiveParser()).listen
   val readX = conntected.map(c => (c, c.startReading))
 
   val readerJProt = readX.map(cx => new JProtocol(cx._1, cx._2))
@@ -34,7 +35,7 @@ object JProtoServer extends App {
     jproto.jRead.subscribe { j =>
       //echo
 //      logger.info(s"sent data - $j")
-      jproto.send(j).flatMap(_ => Continue)
+      jproto.sendRaw(j).flatMap(_ => Continue)
     }
 
     Continue

@@ -13,10 +13,10 @@ import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success}
 import monix.execution.Scheduler.Implicits.global
 
-class ServerEntrance(host: String, port: Int) {
+class ServerEntrance[Proto](host: String, port: Int, parser: ProtoParser[Proto]) {
   private val logger = LoggerFactory.getLogger(getClass)
 
-  private val connectionSubs = PublishSubject[ConnectedSocket]
+  private val connectionSubs = PublishSubject[ConnectedSocket[Proto]]
 
   val socketAddress: InetSocketAddress = new InetSocketAddress(host, port)
 
@@ -36,7 +36,7 @@ class ServerEntrance(host: String, port: Int) {
   /**
     * listen connection and emit every times connects event.
     */
-  def listen: Observable[ConnectedSocket] = {
+  def listen: Observable[ConnectedSocket[Proto]] = {
     logger.info(s"server start listening at - $socketAddress")
     connectForever()
 
@@ -52,10 +52,11 @@ class ServerEntrance(host: String, port: Int) {
         case Failure(e) =>
           logger.warn("connection set up fail", e)
         case Success(c) =>
-          val connectedSocket = new ConnectedSocket(c,
+          val connectedSocket = new ConnectedSocket[Proto](c,
 //            heatBeatsManager,
             AddressPair(c.getLocalAddress.asInstanceOf[InetSocketAddress], c.getRemoteAddress.asInstanceOf[InetSocketAddress]),
-            true
+            true,
+            parser
           )
           logger.info(s"client connected - ${connectedSocket.addressPair.remote}")
 

@@ -3,7 +3,7 @@ package demo
 import java.lang.management.ManagementFactory
 
 import lorance.rxsocket.presentation.json.{IdentityTask, JProtocol}
-import lorance.rxsocket.session.ServerEntrance
+import lorance.rxsocket.session.{CommActiveParser, CommPassiveParser, ServerEntrance}
 import monix.execution.Ack.Continue
 import org.json4s.JsonAST.JString
 import org.json4s.native.JsonMethods._
@@ -25,11 +25,12 @@ object SimpleJProtoServer extends App {
   }
 
 
-  val socket = new ServerEntrance("127.0.0.1", 10011).listen
+  val socket = new ServerEntrance("127.0.0.1", 10011, new CommPassiveParser()).listen
 
   val jprotoSocket = socket.map(connection => new JProtocol(connection, connection.startReading))
 
-  case class Response(result: Option[String], taskId: String) extends IdentityTask
+  case class Response(load: Load, taskId: String)
+  case class Load(result: Option[String])
 
   val  x = jprotoSocket.subscribe { s =>
     val xx =  s.jRead.subscribe{ j =>
@@ -37,9 +38,9 @@ object SimpleJProtoServer extends App {
       Thread.sleep(1000)
       val JString(tskId) = j \ "taskId" //assume has taskId for simplify
       //send multiple msg with same taskId as a stream
-      s.send(Response(Some("foo"), tskId))
+      s.sendRaw(Response(Load(Some("foo")), tskId))
 //      s.send(Response(Some("boo"), tskId))
-      s.send(Response(None, tskId))
+      s.sendRaw(Response(Load(None), tskId))
       Continue
     }
 

@@ -3,7 +3,7 @@ package demo
 import java.nio.ByteBuffer
 
 import lorance.rxsocket._
-import lorance.rxsocket.session.{ConnectedSocket, ServerEntrance}
+import lorance.rxsocket.session._
 import monix.execution.Ack.Continue
 import monix.reactive.Observable
 import monix.execution.Scheduler.Implicits.global
@@ -12,8 +12,8 @@ import monix.execution.Scheduler.Implicits.global
   * simplest Example
   */
 object NormalServer extends App{
-  val server = new ServerEntrance("localhost", 10002)
-  val socket: Observable[ConnectedSocket] = server.listen
+  val server = new ServerEntrance("localhost", 10002, new CommActiveParser())
+  val socket: Observable[ConnectedSocket[CompletedProto]] = server.listen
 
   socket.subscribe{s => println(s"Hi, Mike, someone connected - "); Continue}
   socket.subscribe{s => println(s"Hi, John, someone connected - "); Continue}

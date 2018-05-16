@@ -3,7 +3,7 @@ package benchmark
 import java.lang.management.ManagementFactory
 
 import lorance.rxsocket.presentation.json.JProtocol
-import lorance.rxsocket.session.ClientEntrance
+import lorance.rxsocket.session.{ClientEntrance, CommActiveParser}
 import monix.execution.Scheduler.Implicits.global
 import monix.execution.atomic.AtomicInt
 import org.slf4j.LoggerFactory
@@ -13,7 +13,7 @@ import scala.util.{Failure, Success}
 /**
   * different with JProtoClient, there is not Atomic count
   */
-object JProtoClient2 extends App {
+object JProtoClientWithoutAtomicCounter extends App {
   val logger = LoggerFactory.getLogger(getClass)
 
 //  lorance.rxsocket.session.Configration.CHECK_HEART_BEAT_BREAKTIME = Int.MaxValue
@@ -30,11 +30,10 @@ object JProtoClient2 extends App {
   }
 
 
-  case class OverviewReq(id: Int)//, taskId: String = "blog/index/overview")// extends IdentityTask
-  case class OverviewRsp(id: Int)//, taskId: String)// extends IdentityTask
-//  case class OverviewContent(id: Int)
+  case class OverviewReq(id: Int)
+  case class OverviewRsp(id: Int)
 
-  val client = new ClientEntrance("localhost", 10011)
+  val client = new ClientEntrance("localhost", 10011, new CommActiveParser())
   val connect = client.connect
   connect.onComplete{
     case Failure(f) => logger.info(s"connect fail - $f")
@@ -52,8 +51,6 @@ object JProtoClient2 extends App {
       rsp
     }
   }
-
-//  val atomCountWarmup = AtomicInt(1)
 
   logger.info(s"begin send 1000 times for make jvm hot =============")
   val testBeginTime = System.currentTimeMillis()
@@ -73,19 +70,27 @@ object JProtoClient2 extends App {
 
   Thread.sleep(1000 * 10)
 
-//  val atomCount = AtomicInt(1)
 
   /**
-    * scala> (1504661141248L - 1504661140886L ) / 3000.0F
-    * res2: Float = 0.12066667 (ms)
+    * Some result example:
+    *
+    * send 1000000 request-response use time total: 69532 ms
+    * send 1000000 request-response use time QPS: 14381
+    *
+    * send with Active mode:
+    * send 500000 request-response use time total: 31140 ms
+    * send 500000 request-response use time QPS: 16054
+    *
+    * send with Passive mode:
+    * send 500000 request-response use time total: 33095 ms
+    * send 500000 request-response use time QPS: 15106
     */
   logger.info(s"begin send times  =============")
   val beginTime = System.currentTimeMillis()
-  val toNumber = 1000000
+  val toNumber = 500000
   for(i <- 1 to toNumber) {
 //    logger.info(s"send request - ha$i")
     get(i).foreach(x => {
-//      val count = atomCount.getAndIncrement()
 //      logger.info(s"get response - $x, $count")
       if(x.id == toNumber) {
         println(s"send $toNumber request-response use time total: ${System.currentTimeMillis() - beginTime} ms")

@@ -1,4 +1,4 @@
-package minimotest
+package tmptest
 
 import monix.execution.Ack.Continue
 import monix.reactive.subjects.PublishSubject

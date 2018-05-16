@@ -3,7 +3,7 @@ package benchmark
 import java.lang.management.ManagementFactory
 
 import lorance.rxsocket.presentation.json.JProtocol
-import lorance.rxsocket.session.ClientEntrance
+import lorance.rxsocket.session.{ClientEntrance, CommActiveParser, CommPassiveParser}
 import org.slf4j.LoggerFactory
 import monix.execution.Scheduler.Implicits.global
 import monix.execution.atomic.AtomicInt
@@ -31,7 +31,8 @@ object JProtoClient extends App {
   case class OverviewRsp(result: Option[OverviewContent])//, taskId: String)// extends IdentityTask
   case class OverviewContent(id: Int)
 
-  val client = new ClientEntrance("localhost", 10011)
+  val client = new ClientEntrance("localhost", 10011, new CommPassiveParser())
+
   val connect = client.connect
   connect.onComplete{
     case Failure(f) => logger.info(s"connect fail - $f")

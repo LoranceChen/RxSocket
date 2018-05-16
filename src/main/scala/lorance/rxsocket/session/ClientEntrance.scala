@@ -13,7 +13,7 @@ import scala.concurrent.{Future, Promise}
 /**
   *
   */
-class ClientEntrance(remoteHost: String, remotePort: Int) {
+class ClientEntrance[Proto](remoteHost: String, remotePort: Int, parser: ProtoParser[Proto]) {
   private val logger = LoggerFactory.getLogger(getClass)
 
   val channel: AsynchronousSocketChannel = AsynchronousSocketChannel.open
@@ -21,8 +21,8 @@ class ClientEntrance(remoteHost: String, remotePort: Int) {
 
 //  private val heartBeatManager = new TaskManager()
 
-  def connect: Future[ConnectedSocket] = {
-    val p = Promise[ConnectedSocket]
+  def connect: Future[ConnectedSocket[Proto]] = {
+    val p = Promise[ConnectedSocket[Proto]]
 
     channel.connect(serverAddr, channel, new CompletionHandler[Void, AsynchronousSocketChannel]{
       override def completed(result: Void, attachment: AsynchronousSocketChannel): Unit = {
@@ -30,7 +30,8 @@ class ClientEntrance(remoteHost: String, remotePort: Int) {
         val connectedSocket = new ConnectedSocket(attachment,
 //          heartBeatManager,
           AddressPair(channel.getLocalAddress.asInstanceOf[InetSocketAddress], channel.getRemoteAddress.asInstanceOf[InetSocketAddress]),
-          false
+          false,
+          parser
         )
 
 //        logger.info("add heart beat task")
