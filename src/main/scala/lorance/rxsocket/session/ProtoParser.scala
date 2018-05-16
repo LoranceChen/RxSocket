@@ -72,6 +72,9 @@ abstract class PassiveParser[Proto](protected val initLength: Int) extends Proto
         tmpBf.put(newBf)
         tmpNextLength = -1 //complete tmp next length
         val (curNextLength, protoRst) = passiveReceive(length, tmpBf.array())
+
+        assert(length < Configration.TEMPBUFFER_LIMIT)
+
         tmpBf = ByteBuffer.allocate(curNextLength)
         nextLength = curNextLength
         loop(nextLength, src, protoRst.foldLeft(completes)((olds, `new`) => olds :+ `new`))
@@ -89,6 +92,9 @@ abstract class PassiveParser[Proto](protected val initLength: Int) extends Proto
         src.get(newBf, 0, length)
         tmpBf.put(newBf)
         val (curNextLength, protoRst) = passiveReceive(length, tmpBf.array())
+
+        assert(length < Configration.TEMPBUFFER_LIMIT)
+
         tmpBf = ByteBuffer.allocate(curNextLength)
         nextLength = curNextLength
         loop(nextLength, src, protoRst.foldLeft(completes)((olds, `new`) => olds :+ `new`))
