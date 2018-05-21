@@ -6,18 +6,19 @@ import org.json4s.JsonAST.{JString, JValue}
 /**
   * router define how to deal with received data
   */
-trait Router extends (JValue => EndPoint) {
-  val path: String
+trait JRouter extends (JValue => EndPoint)
+//{
+//  val path: String
+//
+//  lazy val register: Unit = {
+//    Router.routes += (path -> this)
+//  }
+//
+//}
 
-  lazy val register: Unit = {
-    Router.routes += (path -> this)
-  }
+class JRouterManager {
 
-}
-
-object Router {
-
-  val routes = collection.mutable.HashMap[String, Router]()
+  val routes = collection.mutable.HashMap[String, JRouter]()
 
   /**
     * one request map to a observable stream

@@ -49,11 +49,6 @@ class CommActiveParser(private var tmpProto: PaddingProto, maxLength: Int = Conf
       }
     }
 
-    /**
-      * @param src
-      * @param paddingProto has completed length
-      * @return
-      */
     def readLoad(src: ByteBuffer, paddingProto: PaddingProto) = {
       require(paddingProto.lengthOpt.isDefined)
       require(paddingProto.lengthOpt.get.isInstanceOf[CompletedLength])

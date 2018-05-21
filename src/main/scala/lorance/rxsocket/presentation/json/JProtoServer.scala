@@ -12,10 +12,13 @@ import monix.execution.Scheduler.Implicits.global
 
 import scala.concurrent.{Future, Promise}
 
-class JProtoServer(jProtos: Observable[JProtocol], routes: List[Router]) {
-  val logger = LoggerFactory.getLogger(getClass)
+class JProtoServer(jProtos: Observable[JProtocol], routes: Map[String, JRouter]) {
+  protected val logger = LoggerFactory.getLogger(getClass)
 
-  routes.foreach(_.register)
+  val jRouterManager = new JRouterManager()
+
+  jRouterManager.routes ++= routes
+
   //handle streams
   jProtos.subscribe { skt =>
     skt.jRead.subscribe { jValue =>
@@ -35,7 +38,7 @@ class JProtoServer(jProtos: Observable[JProtocol], routes: List[Router]) {
         */
       val load = jValue \ "load"
       val taskId = jValue \ "taskId"
-      val endPoint = Router.dispatch(load)
+      val endPoint = jRouterManager.dispatch(load)
 
       logger.debug("result message - " + endPoint)
 

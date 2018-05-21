@@ -1,6 +1,6 @@
 package demo.jprotoserver
 
-import lorance.rxsocket.presentation.json.{EmptyEndPoint, EndPoint, RawEndPoint, Router, StreamEndPoint}
+import lorance.rxsocket.presentation.json.{EmptyEndPoint, EndPoint, RawEndPoint, JRouter, StreamEndPoint}
 import monix.reactive.Observable
 import org.json4s.DefaultFormats
 import org.json4s.JsonAST._
@@ -12,11 +12,11 @@ import scala.util.Success
 /**
   *
   */
-class ExampleRouter extends Router {
+class ExampleRouter extends JRouter {
   private val logger = LoggerFactory.getLogger(getClass)
   implicit val formats: DefaultFormats.type = DefaultFormats
 
-  override val path = "login"
+//  override val path = "login"
 
   override def apply(reqJson: JValue): EndPoint = {
     logger.debug("get_json:" + reqJson)

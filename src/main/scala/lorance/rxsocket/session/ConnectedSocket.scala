@@ -45,7 +45,7 @@ class ConnectedSocket[Proto](socketChannel: AsynchronousSocketChannel,
   @volatile private var closeReason: String = "normal close"
 
   private val formerSendLock = new Object
-  @volatile private var formerSendFur = Future.successful(())
+  private var formerSendFur = Future.successful(())
 //  @volatile private var formerSendTimeoutPromise = Promise[Unit]()
 
   //a event register when socket disconnect
@@ -131,6 +131,7 @@ class ConnectedSocket[Proto](socketChannel: AsynchronousSocketChannel,
                     publishProtoWithGoodHabit(leftProtos.tail)
                     Continue
                   case Stop =>
+                    //todo: should just Stop? What effect will be occurred.
                     Stop
                 }
             }
@@ -195,7 +196,8 @@ class ConnectedSocket[Proto](socketChannel: AsynchronousSocketChannel,
             //        case err @ (_: ShutdownChannelGroupException | _: ClosedChannelException | _ @ NonFatal(e)) =>
             case NonFatal(err) =>
               logger.warn(s"send:write fail - {}", err)
-//              socketClosed = true
+              disconnect(err.toString)
+              //socketClosed = true
               closePromise.tryFailure(SocketClosedException(addressPair.toString))
               p.tryFailure(err)
           }
