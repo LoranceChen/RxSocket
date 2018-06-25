@@ -12,12 +12,12 @@ import monix.execution.Scheduler.Implicits.global
 
 import scala.concurrent.{Future, Promise}
 
-class JProtoServer(jProtos: Observable[JProtocol], routes: Map[String, JRouter]) {
+class JProtoServer(jProtos: Observable[JProtocol], routes: List[JRouter]) {
   protected val logger = LoggerFactory.getLogger(getClass)
 
   val jRouterManager = new JRouterManager()
 
-  jRouterManager.routes ++= routes
+  jRouterManager.routes ++= routes.map(x => x.path -> x).toMap
 
   //handle streams
   jProtos.subscribe { skt =>

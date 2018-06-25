@@ -6,14 +6,17 @@ import lorance.rxsocket.session._
 import monix.reactive.Observable
 import org.slf4j.LoggerFactory
 
-
 /**
   *
   */
 object AdvanceJProtoServer extends App {
   Tool.showPid
 
-  val routes = Map("login" -> new ExampleRouter)
+  val routes = List(
+    new ExampleRouter,
+
+  )
+
   new SimpleServer("localhost", 10020, routes)
 
   Tool.createGcThread(1000 * 10)
@@ -25,7 +28,7 @@ object AdvanceJProtoServer extends App {
 /**
   * simple warp for `JProtoServer`
   */
-class SimpleServer(host: String, port: Int, routes: Map[String, JRouter]) {
+class SimpleServer(host: String, port: Int, routes: List[JRouter]) {
   val logger = LoggerFactory.getLogger(getClass)
   //socket init
   val connectedStream: Observable[ConnectedSocket[CompletedProto]] = new ServerEntrance(host, port, new CommPassiveParser()).listen

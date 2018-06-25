@@ -2,23 +2,22 @@ package lorance.rxsocket.presentation.json
 
 import org.json4s.JsonAST.{JString, JValue}
 
+import scala.collection.mutable
+
 
 /**
   * router define how to deal with received data
   */
-trait JRouter extends (JValue => EndPoint)
-//{
-//  val path: String
-//
-//  lazy val register: Unit = {
-//    Router.routes += (path -> this)
-//  }
-//
-//}
+trait JRouter {
+  val path: String
+
+  def jsonRoute(jValue: JValue): EndPoint
+
+}
 
 class JRouterManager {
 
-  val routes = collection.mutable.HashMap[String, JRouter]()
+  val routes: mutable.HashMap[String, JRouter] = collection.mutable.HashMap[String, JRouter]()
 
   /**
     * one request map to a observable stream
@@ -37,7 +36,7 @@ class JRouterManager {
     val JString(path) = load \ "path"
 
     val route = routes(path)
-    route(load)
+    route.jsonRoute(load)
   }
 }
 

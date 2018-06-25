@@ -11,7 +11,8 @@ scalacOptions ++= Seq(
   "-deprecation",
   "-feature",
   "-language:postfixOps",
-  "-language:implicitConversions"
+  "-language:implicitConversions",
+  "-language:higherKinds",
 )
 
 resolvers ++= Seq(
