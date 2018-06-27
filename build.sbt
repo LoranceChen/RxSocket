@@ -55,6 +55,9 @@ lazy val commonPublishSettings = Seq (
 
 )
 
+lazy val example = (project in file("example")).
+  dependsOn(root)
+
 lazy val root = (project in file(".")).
   settings(commonPublishSettings).
   settings(
