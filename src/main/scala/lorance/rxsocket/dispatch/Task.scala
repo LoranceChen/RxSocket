@@ -16,8 +16,6 @@ object Task {
     * combine with thread and current time to identity this task
     */
   def getId: String = {
-    val threadId = Thread.currentThread().getId
-    val nanoTime = System.nanoTime()
-    nanoTime + "-" + threadId
+    new ObjectId().toString
   }
 }
