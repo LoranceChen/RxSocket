@@ -1,0 +1,35 @@
+<configuration scan="true" scanPeriod="60 seconds" debug="false">
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
+
+    <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+        <!--  just for stdout in screen   -->
+        <encoder charset="UTF-8">
+            <pattern>[%thread] [%date] [%level] [%logger{35}] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <encoder charset="UTF-8">
+            <pattern>[%thread] [%date] [%level] [%logger{35}] - %msg%n</pattern>
+        </encoder>
+
+        <!--fill log-->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/rxsocket-example.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxHistory>10</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+            <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="stdout" />
+        <appender-ref ref="file" />
+    </root>
+
+    <logger name="minimo" level="DEBUG"/>
+    <logger name="example" level="DEBUG"/>
+    <!--<logger name="minimo.route.LoginRouter" level="DEBUG"/>-->
+    <!--<logger name="minimo.Network" level="DEBUG"/>-->
+</configuration>

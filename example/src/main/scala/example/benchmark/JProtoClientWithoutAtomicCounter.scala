@@ -1,11 +1,10 @@
-package benchmark
+package example.benchmark
 
 import java.lang.management.ManagementFactory
 
 import lorance.rxsocket.presentation.json.JProtocol
 import lorance.rxsocket.session.{ClientEntrance, CommActiveParser}
 import monix.execution.Scheduler.Implicits.global
-import monix.execution.atomic.AtomicInt
 import org.slf4j.LoggerFactory
 
 import scala.util.{Failure, Success}

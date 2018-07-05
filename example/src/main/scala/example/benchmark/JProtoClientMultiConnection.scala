@@ -1,4 +1,4 @@
-package benchmark
+package example.benchmark
 
 import java.lang.management.ManagementFactory
 import java.util.concurrent.Executors
@@ -30,11 +30,13 @@ object JProtoClientMultiConnection extends App {
 //  lorance.rxsocket.session.Configration.SEND_HEART_BEAT_BREAKTIME = Int.MaxValue
 
   case class OverviewReq(penName: String)//, taskId: String = "blog/index/overview")// extends IdentityTask
-  case class OverviewRsp(result: Option[OverviewContent])//, taskId: String)// extends IdentityTask
-  case class OverviewContent(id: String)
+//  case class OverviewRsp(result: Option[OverviewContent])//, taskId: String)// extends IdentityTask
+  case class OverviewContent(penName: String)
 
   def testOne(testCount: Int, count: Int, atomCount: AtomicInt, benchmarkMaxCount: Int, beginTime: Long) = {
-    val client = new ClientEntrance("localhost", 10011, new CommActiveParser())
+    println(s"testCount: $testCount, count: $count, atomCount: $atomCount, benchmarkMaxCount: $benchmarkMaxCount, beginTime: $beginTime")
+//    val client = new ClientEntrance("192.168.1.231", 10011, new CommActiveParser())
+    val client = new ClientEntrance("127.0.0.1", 10011, new CommActiveParser())
     val connect = client.connect
     connect.onComplete {
       case Failure(f) => logger.info(s"connect fail - $f")
@@ -50,7 +52,7 @@ object JProtoClientMultiConnection extends App {
     def get(name: String) = {
       jproto.flatMap { s =>
         logger.info(s"s.sendWithRsp - $name")
-        val rsp = s.sendWithRsp[OverviewReq, OverviewRsp](OverviewReq(name))
+        val rsp = s.sendWithRsp[OverviewReq, OverviewContent](OverviewReq(name))
         rsp
       }
     }
@@ -89,7 +91,7 @@ object JProtoClientMultiConnection extends App {
       get(s"ha$i").foreach(x => {
         val count = atomCount.getAndIncrement()
         val localCount = localAtomCount.getAndIncrement()
-        logger.info(s"get response - $x, $count")
+        println(s"get response - $x, $count")
 //        if (localCount == toNumber) {
 //          println(s"send $toNumber request-response use time total: ${System.currentTimeMillis() - beginTime} ms")
 //          println(s"send $toNumber request-response use time QPS: ${toNumber * 1000 / (System.currentTimeMillis() - beginTime)}")
@@ -119,7 +121,7 @@ object JProtoClientMultiConnection extends App {
 
 
   //for warmup
-  val glbWarmupAtomCount = AtomicInt(1)
+//  val glbWarmupAtomCount = AtomicInt(1)
 
 //  testOne(2000, 10000, glbWarmupAtomCount, 100000, System.currentTimeMillis())
 
@@ -130,8 +132,8 @@ object JProtoClientMultiConnection extends App {
   val glbAtomCount = AtomicInt(1)
 
   val beginTime = System.currentTimeMillis()
-  val clientCount = 40
-  val msgCount = 2
+  val clientCount = 1
+  val msgCount = 5000
 
   (1 to clientCount).toList.foreach(_ => {
     Future(testOne(0, msgCount, glbAtomCount, msgCount * clientCount, beginTime)){
@@ -141,6 +143,11 @@ object JProtoClientMultiConnection extends App {
   })
 
 //  demo.tool.Tool.createGcThread(1000 * 10)
+
+  //判断哪些消息漏掉了，整理出来和在服务器端反查什么情况
+  def analysis(responses: List[OverviewContent]) = {
+
+  }
 
   Thread.currentThread().join()
 }

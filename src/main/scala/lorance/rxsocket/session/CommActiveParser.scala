@@ -54,7 +54,10 @@ class CommActiveParser(private var tmpProto: PaddingProto, maxLength: Int = Conf
       require(paddingProto.lengthOpt.get.isInstanceOf[CompletedLength])
 
       val length = paddingProto.lengthOpt.get.value//todo refactor
-      if (length > maxLength) throw new TmpBufferOverLoadException()
+      if (length > maxLength) {
+        println(s"load too large length - $length > $maxLength")
+        throw new TmpBufferOverLoadException()
+      }
       if (src.remaining() < length) {
         val newBf = ByteBuffer.allocate(length)
         tmpProto = PaddingProto(paddingProto.uuidOpt, paddingProto.lengthOpt, newBf.put(src))

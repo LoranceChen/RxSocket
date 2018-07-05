@@ -25,7 +25,7 @@ object SimpleJProtoServer extends App {
   }
 
 
-  val socket = new ServerEntrance("127.0.0.1", 10011, new CommPassiveParser()).listen
+  val socket = new ServerEntrance("127.0.0.1", 10011, () => new CommPassiveParser()).listen
 
   val jprotoSocket = socket.map(connection => new JProtocol(connection, connection.startReading))
 

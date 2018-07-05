@@ -44,7 +44,7 @@ class JProtocol(val connectedSocket: ConnectedSocket[CompletedProto], read: Obse
     read.map{ cp =>
       if(cp.uuid == 1.toByte) {
         val load = cp.loaded.array.string
-        logger.debug(s"$load", 46, Some("proto-json"))
+        logger.debug(s"json-proto: $load")
         Some(parse(load))
       } else  None
     }.filter(_.nonEmpty).map(_.get)
@@ -203,11 +203,11 @@ class JProtocol(val connectedSocket: ConnectedSocket[CompletedProto], read: Obse
       val taskId = Task.getId
       this.addTask(taskId, register)
 
-      val resultObv = register.map { s => s.extract[Rsp]}
-//      val resultFur = register.map { s => s.extract[Rsp]}
-//        .timeoutOnSlowUpstream(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS))
-//        .future
-//
+//      val resultObv = register.map { s => s.extract[Rsp]}
+      val resultFur = register.map { s => s.extract[Rsp]}
+        .timeoutOnSlowUpstream(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS))
+        .future
+
 //      resultFur.onComplete({
 //        case Failure(ex) =>
 //          logger.error(s"[Throw] JProtocol.taskResult - $taskId", ex)
@@ -224,21 +224,37 @@ class JProtocol(val connectedSocket: ConnectedSocket[CompletedProto], read: Obse
       val bytes = JsonParse.enCode(mergeTaskId)
       val sendFur = connectedSocket.send(ByteBuffer.wrap(bytes))
 
-      sendFur.flatMap(_ => {
-        val resultFur = resultObv
-          .timeoutOnSlowUpstream(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS))
-          .future
+      val combinedFur = for {
+        _ <- sendFur
+        dataRst <- resultFur
+      } yield {
+        dataRst
+      }
 
-        resultFur.onComplete({
-          case Failure(ex) =>
-            logger.error(s"[Throw] JProtocol.taskResult - $taskId", ex)
-            this.removeTask(taskId)
-          case Success(_) =>
-            this.removeTask(taskId)
-        })
-
-        resultFur
+      combinedFur.onComplete({
+        case Failure(ex) =>
+          logger.error(s"[Throw] JProtocol.taskResult - $taskId", ex)
+          this.removeTask(taskId)
+        case Success(_) =>
+          this.removeTask(taskId)
       })
+
+//      sendFur.flatMap(_ => {
+//        val resultFur = resultObv
+//          .timeoutOnSlowUpstream(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS))
+//          .future
+//
+//        resultFur.onComplete({
+//          case Failure(ex) =>
+//            logger.error(s"[Throw] JProtocol.taskResult - $taskId", ex)
+//            this.removeTask(taskId)
+//          case Success(_) =>
+//            this.removeTask(taskId)
+//        })
+//
+//        resultFur
+//      })
+      combinedFur
     }
   }
 
@@ -261,7 +277,7 @@ class JProtocol(val connectedSocket: ConnectedSocket[CompletedProto], read: Obse
         }
 
       val resultStream = additional.map(f => f(extract)).getOrElse(extract)
-
+        .timeoutOnSlowUpstream(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS))
 
       //send msg after prepare stream
       val mergeTaskId =
@@ -270,9 +286,9 @@ class JProtocol(val connectedSocket: ConnectedSocket[CompletedProto], read: Obse
       val bytes = JsonParse.enCode(mergeTaskId)
       val sendFur = connectedSocket.send(ByteBuffer.wrap(bytes))
 
+
       Observable.fromFuture(sendFur).flatMap(_ =>
         resultStream
-          .timeoutOnSlowUpstream(Duration(presentation.JPROTO_TIMEOUT, TimeUnit.SECONDS))
           .doOnError { e =>
             logger.error(s"JProtocol.taskResult - $any", e)
             this.removeTask(taskId)
@@ -282,7 +298,7 @@ class JProtocol(val connectedSocket: ConnectedSocket[CompletedProto], read: Obse
           }
           .doOnEarlyStop(() => this.removeTask(taskId))
       )
-        .share
+      .share
 
     }
   }

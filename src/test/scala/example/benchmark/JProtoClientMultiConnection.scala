@@ -1,4 +1,4 @@
-package benchmark
+package example.benchmark
 
 import java.lang.management.ManagementFactory
 import java.util.concurrent.Executors
@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future, Promise}
 import scala.util.{Failure, Success}
 
-object JProtoClientMultiConnection extends App {
+object JProtoClientMultiConnectionTest extends App {
 
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -29,11 +29,11 @@ object JProtoClientMultiConnection extends App {
 //  lorance.rxsocket.session.Configration.CHECK_HEART_BEAT_BREAKTIME = Int.MaxValue
 //  lorance.rxsocket.session.Configration.SEND_HEART_BEAT_BREAKTIME = Int.MaxValue
 
-  case class OverviewReq(penName: String)//, taskId: String = "blog/index/overview")// extends IdentityTask
-  case class OverviewRsp(result: Option[OverviewContent])//, taskId: String)// extends IdentityTask
-  case class OverviewContent(id: String)
+  case class OverviewReq(id: String)//, taskId: String = "blog/index/overview")// extends IdentityTask
+//  case class OverviewRsp(result: Option[OverviewContent])//, taskId: String)// extends IdentityTask
+  case class OverviewRsp(id: String)
 
-  def testOne(testCount: Int, count: Int, atomCount: AtomicInt, benchmarkMaxCount: Int, beginTime: Long) = {
+  def testOne(testCount: Int, count: Int, glAtomCount: AtomicInt, benchmarkMaxCount: Int, beginTime: Long) = {
     val client = new ClientEntrance("localhost", 10011, new CommActiveParser())
     val connect = client.connect
     connect.onComplete {
@@ -86,10 +86,10 @@ object JProtoClientMultiConnection extends App {
     for (i <- 1 to toNumber) {
       //testes 100w
 //      logger.info(s"send request - ha$i")
-      get(s"ha$i").foreach(x => {
-        val count = atomCount.getAndIncrement()
+      get(s"ha$i").foreach(id => {
+        val count = glAtomCount.getAndIncrement()
         val localCount = localAtomCount.getAndIncrement()
-        logger.info(s"get response - $x, $count")
+        logger.info(s"get response - $id, $count")
 //        if (localCount == toNumber) {
 //          println(s"send $toNumber request-response use time total: ${System.currentTimeMillis() - beginTime} ms")
 //          println(s"send $toNumber request-response use time QPS: ${toNumber * 1000 / (System.currentTimeMillis() - beginTime)}")
@@ -119,7 +119,7 @@ object JProtoClientMultiConnection extends App {
 
 
   //for warmup
-  val glbWarmupAtomCount = AtomicInt(1)
+//  val glbWarmupAtomCount = AtomicInt(1)
 
 //  testOne(2000, 10000, glbWarmupAtomCount, 100000, System.currentTimeMillis())
 
@@ -130,8 +130,8 @@ object JProtoClientMultiConnection extends App {
   val glbAtomCount = AtomicInt(1)
 
   val beginTime = System.currentTimeMillis()
-  val clientCount = 40
-  val msgCount = 2
+  val clientCount = 50
+  val msgCount = 1000
 
   (1 to clientCount).toList.foreach(_ => {
     Future(testOne(0, msgCount, glbAtomCount, msgCount * clientCount, beginTime)){
@@ -140,7 +140,7 @@ object JProtoClientMultiConnection extends App {
     }
   })
 
-  demo.tool.Tool.createGcThread(1000 * 10)
+//  demo.tool.Tool.createGcThread(1000 * 10)
 
   Thread.currentThread().join()
 }

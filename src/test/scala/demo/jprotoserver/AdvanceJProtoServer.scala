@@ -31,7 +31,7 @@ object AdvanceJProtoServer extends App {
 class SimpleServer(host: String, port: Int, routes: List[JRouter]) {
   val logger = LoggerFactory.getLogger(getClass)
   //socket init
-  val connectedStream: Observable[ConnectedSocket[CompletedProto]] = new ServerEntrance(host, port, new CommPassiveParser()).listen
+  val connectedStream: Observable[ConnectedSocket[CompletedProto]] = new ServerEntrance(host, port, () => new CommPassiveParser()).listen
   val jsonProtoStream: Observable[JProtocol] = connectedStream.map(c =>  new JProtocol(c, c.startReading))
 
   //register service

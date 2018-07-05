@@ -55,8 +55,15 @@ lazy val commonPublishSettings = Seq (
 
 )
 
-lazy val example = (project in file("example")).
-  dependsOn(root)
+lazy val example = (project in file("example"))
+  .settings(
+    libraryDependencies ++= Seq(
+      "ch.qos.logback" % "logback-classic" % "1.2.3" % Test,
+    )
+  )
+  .dependsOn(root)
+
+lazy val task = project in file("task")
 
 lazy val root = (project in file(".")).
   settings(commonPublishSettings).
@@ -92,3 +99,4 @@ lazy val root = (project in file(".")).
   )
 
 fork := true
+updateOptions := updateOptions.value.withCachedResolution(true)
