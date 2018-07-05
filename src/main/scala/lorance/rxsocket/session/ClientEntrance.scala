@@ -13,7 +13,7 @@ import scala.concurrent.{Future, Promise}
 /**
   *
   */
-class ClientEntrance[Proto](remoteHost: String, remotePort: Int, parser: ProtoParser[Proto]) {
+class ClientEntrance[Proto](remoteHost: String, remotePort: Int, genParser: () => ProtoParser[Proto]) {
   private val logger = LoggerFactory.getLogger(getClass)
 
   val channel: AsynchronousSocketChannel = AsynchronousSocketChannel.open
@@ -31,7 +31,7 @@ class ClientEntrance[Proto](remoteHost: String, remotePort: Int, parser: ProtoPa
 //          heartBeatManager,
           AddressPair(channel.getLocalAddress.asInstanceOf[InetSocketAddress], channel.getRemoteAddress.asInstanceOf[InetSocketAddress]),
           false,
-          parser
+          genParser()
         )
 
 //        logger.info("add heart beat task")

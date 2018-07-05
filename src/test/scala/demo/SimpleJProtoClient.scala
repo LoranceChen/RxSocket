@@ -26,7 +26,7 @@ object SimpleJProtoClient extends App {
   }
 
 
-  val client = new ClientEntrance("localhost", 10011, new CommPassiveParser()).connect
+  val client = new ClientEntrance("localhost", 10011, () => new CommPassiveParser()).connect
   val jproto = client.map { x => new JProtocol(x, x.startReading) }
 
   val rst = Observable.fromFuture(jproto).flatMap(jprotocol => {

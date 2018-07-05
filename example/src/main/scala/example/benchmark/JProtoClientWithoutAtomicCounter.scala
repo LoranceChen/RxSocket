@@ -32,7 +32,7 @@ object JProtoClientWithoutAtomicCounter extends App {
   case class OverviewReq(id: Int)
   case class OverviewRsp(id: Int)
 
-  val client = new ClientEntrance("localhost", 10011, new CommActiveParser())
+  val client = new ClientEntrance("localhost", 10011, () => new CommActiveParser())
   val connect = client.connect
   connect.onComplete{
     case Failure(f) => logger.info(s"connect fail - $f")

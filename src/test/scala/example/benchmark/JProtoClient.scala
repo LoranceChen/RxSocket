@@ -31,7 +31,7 @@ object JProtoClient extends App {
   case class OverviewRsp(result: Option[OverviewContent])//, taskId: String)// extends IdentityTask
   case class OverviewContent(id: Int)
 
-  val client = new ClientEntrance("localhost", 10011, new CommPassiveParser())
+  val client = new ClientEntrance("localhost", 10011, () => new CommPassiveParser())
 
   val connect = client.connect
   connect.onComplete{

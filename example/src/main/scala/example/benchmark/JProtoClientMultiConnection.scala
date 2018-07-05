@@ -36,7 +36,7 @@ object JProtoClientMultiConnection extends App {
   def testOne(testCount: Int, count: Int, atomCount: AtomicInt, benchmarkMaxCount: Int, beginTime: Long) = {
     println(s"testCount: $testCount, count: $count, atomCount: $atomCount, benchmarkMaxCount: $benchmarkMaxCount, beginTime: $beginTime")
 //    val client = new ClientEntrance("192.168.1.231", 10011, new CommActiveParser())
-    val client = new ClientEntrance("127.0.0.1", 10011, new CommActiveParser())
+    val client = new ClientEntrance("127.0.0.1", 10011, () => new CommActiveParser())
     val connect = client.connect
     connect.onComplete {
       case Failure(f) => logger.info(s"connect fail - $f")

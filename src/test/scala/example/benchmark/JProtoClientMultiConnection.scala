@@ -34,7 +34,7 @@ object JProtoClientMultiConnectionTest extends App {
   case class OverviewRsp(id: String)
 
   def testOne(testCount: Int, count: Int, glAtomCount: AtomicInt, benchmarkMaxCount: Int, beginTime: Long) = {
-    val client = new ClientEntrance("localhost", 10011, new CommActiveParser())
+    val client = new ClientEntrance("localhost", 10011, () => new CommActiveParser())
     val connect = client.connect
     connect.onComplete {
       case Failure(f) => logger.info(s"connect fail - $f")

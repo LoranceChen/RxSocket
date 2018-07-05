@@ -15,7 +15,7 @@ object JProtoClient extends App {
 //  lorance.rxsocket.session.Configration.CHECK_HEART_BEAT_BREAKTIME = Int.MaxValue
 //  lorance.rxsocket.session.Configration.SEND_HEART_BEAT_BREAKTIME = Int.MaxValue
 
-  val client = new ClientEntrance("localhost", 10020, new CommPassiveParser()).connect
+  val client = new ClientEntrance("localhost", 10020, () => new CommPassiveParser()).connect
   val jproto = client.map { x => new JProtocol(x, x.startReading) }
 
   RxSocketAPI.login.foreach(loginSuccess => println("loginSuccess: " + loginSuccess))
