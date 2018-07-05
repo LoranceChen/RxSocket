@@ -6,7 +6,7 @@ Reactive programming has a important concept of stream which allow application s
 ### SBT Usage
 From `v0.12.0`, RxSocket only support Scala `2.12.x` and `2.11.x`
 ```
-"com.scalachan" %% "rxsocket" % "0.12.2"
+"com.scalachan" %% "rxsocket" % "0.13.1"
 ```
 
 ### Features
@@ -23,5 +23,9 @@ From `v0.12.0`, RxSocket only support Scala `2.12.x` and `2.11.x`
 
 ### TODO
 - support heartbeat
-- add monitor for net status
+    - timing wheel
+- priority scheduler thread pool
+    - avoid callback re-enqueue to thread pool(forkjoinpool now) result timeout.
+    - allow handler massive request and give a slight performance affect
+        - give a space to monitor network reqesut status
 - better benchmark

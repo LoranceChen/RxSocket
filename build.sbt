@@ -1,4 +1,4 @@
-version := "0.13.1-SNAPSHOT"
+version := "0.13.1"
 
 name := "rxsocket"
 
