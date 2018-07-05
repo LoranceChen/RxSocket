@@ -25,7 +25,7 @@ From `v0.12.0`, RxSocket only support Scala `2.12.x` and `2.11.x`
 - support heartbeat
     - timing wheel
 - priority scheduler thread pool
-    - avoid callback re-enqueue to thread pool(forkjoinpool now) result timeout.
+    - avoid request callback re-enqueue to thread pool(forkjoinpool now) caused timeout.
     - allow handler massive request and give a slight performance affect
-        - give a space to monitor network reqesut status
+        - give a space to monitor network request status
 - better benchmark
