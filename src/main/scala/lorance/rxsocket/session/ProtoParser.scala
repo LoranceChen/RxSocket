@@ -36,108 +36,60 @@ abstract class PassiveParser[Proto](protected val initLength: Int, protected val
 
   private var nextLength = initLength
   private var nextSymbol = initSymbol
-  private var tmpNextLength = -1//needn't tmp length
 
   //the parser want byte length for next loop, subclass should give it a init value
   assert(nextLength > 0)
-  var tmpBf: ByteBuffer = ByteBuffer.allocate(initLength)
+  private var tmpBf: ByteBuffer = ByteBuffer.allocate(initLength)
+  private var tmpLength: Int = initLength
 
   protected def passiveReceive(symbol: Symbol, length: Int, data: Array[Byte]): (Symbol, Int, Option[Proto])
 
   //invoke the Fn by socket reader
   protected override def parser(src: ByteBuffer): Vector[Proto] = {
-    loop(nextSymbol, nextLength, src, Vector.empty[Proto])
+    loop(src, Vector.empty[Proto])
   }
 
-  /**
-    * implement a passive mode loop
-    * @param length
-    * @param src
-    * @param completes
-    * @return
-    */
-  @tailrec private def loop(symbol: Symbol, length: Int, src: ByteBuffer, completes: Vector[Proto]): Vector[Proto] = {
-    assert(length <= session.Configration.TEMPBUFFER_LIMIT)
+  @tailrec private def loop(src: ByteBuffer,
+                            completes: Vector[Proto]): Vector[Proto] = {
+    assert(nextLength <= session.Configration.TEMPBUFFER_LIMIT)
     val remaining = src.remaining()
+//    logger.info(s"loop_data - $nextSymbol, $nextLength, ${tmpBf.position()}, ${tmpBf.limit()}, ${src.position()}, ${src.limit()}")
 
-    if(tmpNextLength != -1) {// deal with uncompleted tmp length
-      if(remaining < tmpNextLength) {//tmp length依然不足
-//        val newBf = new Array[Byte](remaining)
-//        src.get(newBf, 0, remaining)
-//        tmpBf.put(newBf)
-//        tmpNextLength = tmpNextLength - remaining
+    if(remaining < nextLength) {//不足
+      //全部加入到tmpBf中
+      val myArr = new Array[Byte](remaining)
+//      logger.info(s"part_data - $nextSymbol, $nextLength, ${tmpBf.position()}, ${tmpBf.limit()}, ${src.position()}, ${src.limit()}")
+      src.get(myArr, 0, remaining)
+      tmpBf.put(myArr)
 
-        fillPartData(remaining, src, tmpNextLength)
+      //更新状态
+      nextLength = nextLength - remaining
 
-        completes
-      } else {//足够填充tmp length
-        tmpNextLength = -1 //complete tmp next length
-        val protoRst = fillEnoughData(symbol, length, src)
+      //返回结果
+      completes
+    } else { //足够
+      //填充bf
+      val myArr = new Array[Byte](nextLength)
+//      logger.info(s"engouthdata - $nextSymbol, $nextLength, ${tmpBf.position()}, ${tmpBf.limit()}, ${src.position()}, ${src.limit()}")
+      src.get(myArr, 0, nextLength)
+      tmpBf.put(myArr)
+      val (newSymbol, newLength, stageProto) = passiveReceive(nextSymbol, tmpLength, tmpBf.array())
 
-//        val newBf = new Array[Byte](tmpNextLength)
-//        src.get(newBf, 0, tmpNextLength)
-//        tmpBf.put(newBf)
-//        tmpNextLength = -1 //complete tmp next length
-//        val (curNextSymbol, curNextLength, protoRst) = passiveReceive(symbol, length, tmpBf.array())
-//
-//        assert(length < Configration.TEMPBUFFER_LIMIT)
-//
-//        tmpBf = ByteBuffer.allocate(curNextLength)
-//        nextLength = curNextLength
-//        nextSymbol = curNextSymbol
-
-        loop(nextSymbol, nextLength, src, protoRst.foldLeft(completes)((olds, `new`) => olds :+ `new`))
+      //更新状态
+      val updatedProtos = stageProto match {
+        case None => completes
+        case Some(completedProto) => completes :+ completedProto
       }
 
-    } else { //不需要tmpLength
-      if(remaining < length) {//收取的数据个数少于需要的数据个数：保存到临时消息中
-//        val newBf = new Array[Byte](remaining)
-//        src.get(newBf, 0, remaining)
-//        tmpBf.put(newBf)
-//        tmpNextLength = length - remaining //set tmp next length
-        fillPartData(remaining, src, length)
+      nextSymbol = newSymbol
+      nextLength = newLength
+      tmpBf = ByteBuffer.allocate(newLength)
+      tmpLength = newLength
 
-        completes
-      } else {//收取的数据足够
-        val protoRst = fillEnoughData(symbol, length, src)
-
-//        val newBf = new Array[Byte](length)
-//        src.get(newBf, 0, length)
-//        tmpBf.put(newBf)
-//        val (curNextSymbol, curNextLength, protoRst) = passiveReceive(symbol, length, tmpBf.array())
-//
-//        assert(length < Configration.TEMPBUFFER_LIMIT)
-//
-//        tmpBf = ByteBuffer.allocate(curNextLength)
-//        nextLength = curNextLength
-//        nextSymbol = curNextSymbol
-
-        loop(nextSymbol, nextLength, src, protoRst.foldLeft(completes)((olds, `new`) => olds :+ `new`))
-      }
+      //再次填充剩下的src
+      loop(src, updatedProtos)
     }
 
-  }
-
-  private def fillEnoughData(symbol: Symbol, length: Int, src: ByteBuffer) = {
-    val newBf = new Array[Byte](length)
-    src.get(newBf, 0, length)
-    tmpBf.put(newBf)
-    val (curNextSymbol, curNextLength, protoRst) = passiveReceive(symbol, length, tmpBf.array())
-
-    assert(length < Configration.TEMPBUFFER_LIMIT)
-
-    tmpBf = ByteBuffer.allocate(curNextLength)
-    nextLength = curNextLength
-    nextSymbol = curNextSymbol
-
-    protoRst
-  }
-
-  private def fillPartData(remaining: Int, src: ByteBuffer, decreaseLength: Int) = {
-    val newBf = new Array[Byte](remaining)
-    src.get(newBf, 0, remaining)
-    tmpBf.put(newBf)
-    tmpNextLength = decreaseLength - remaining
   }
 
 }

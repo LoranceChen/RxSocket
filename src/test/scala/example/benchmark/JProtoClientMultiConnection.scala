@@ -4,7 +4,7 @@ import java.lang.management.ManagementFactory
 import java.util.concurrent.Executors
 
 import lorance.rxsocket.presentation.json.JProtocol
-import lorance.rxsocket.session.{ClientEntrance, CommActiveParser}
+import lorance.rxsocket.session.{ClientEntrance, CommActiveParser, CommPassiveParser}
 import monix.execution.Scheduler.Implicits.global
 import monix.execution.atomic.AtomicInt
 import org.slf4j.LoggerFactory
@@ -34,7 +34,7 @@ object JProtoClientMultiConnectionTest extends App {
   case class OverviewRsp(id: String)
 
   def testOne(testCount: Int, count: Int, glAtomCount: AtomicInt, benchmarkMaxCount: Int, beginTime: Long) = {
-    val client = new ClientEntrance("localhost", 10011, () => new CommActiveParser())
+    val client = new ClientEntrance("localhost", 10011, () => new CommPassiveParser())
     val connect = client.connect
     connect.onComplete {
       case Failure(f) => logger.info(s"connect fail - $f")
@@ -130,8 +130,8 @@ object JProtoClientMultiConnectionTest extends App {
   val glbAtomCount = AtomicInt(1)
 
   val beginTime = System.currentTimeMillis()
-  val clientCount = 50
-  val msgCount = 1000
+  val clientCount = 10
+  val msgCount = 2000
 
   (1 to clientCount).toList.foreach(_ => {
     Future(testOne(0, msgCount, glbAtomCount, msgCount * clientCount, beginTime)){

@@ -27,7 +27,7 @@ class CommPassiveParser(private var tmpProto: PaddingProto) extends PassiveParse
           ByteBuffer.wrap(data)
         )))
       case _ =>
-        throw ProtoParseError(s"should NOT arrive - $length")
+        throw ProtoParseError(s"should NOT arrive - symbol=$symbol, length=$length")
 
     }
   }
