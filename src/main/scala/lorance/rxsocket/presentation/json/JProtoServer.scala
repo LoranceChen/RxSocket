@@ -17,7 +17,7 @@ class JProtoServer(jProtos: Observable[JProtocol], routes: List[JRouter]) {
 
   val jRouterManager = new JRouterManager()
 
-  jRouterManager.routes ++= routes.map(x => x.path -> x).toMap
+  jRouterManager.routes ++= routes.map(x => x.jsonPath -> x).toMap
 
   //handle streams
   jProtos.subscribe { skt =>

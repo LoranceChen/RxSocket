@@ -9,9 +9,10 @@ import scala.collection.mutable
   * router define how to deal with received data
   */
 trait JRouter {
-  val path: String
+  val jsonPath: String
 
-  def jsonRoute(jValue: JValue): EndPoint
+  def jsonRoute(protoId: String, load: JValue): EndPoint
+
 
 }
 
@@ -34,9 +35,11 @@ class JRouterManager {
     */
   def dispatch(load: JValue): EndPoint = {
     val JString(path) = load \ "path"
+    val JString(protoId) = load \ "protoId"
 
     val route = routes(path)
-    route.jsonRoute(load)
+    route.jsonRoute(protoId, load \ "load")
   }
+
 }
 

@@ -16,11 +16,10 @@ class ExampleRouter extends JRouter {
   private val logger = LoggerFactory.getLogger(getClass)
   implicit val formats: DefaultFormats.type = DefaultFormats
 
-  override val path = "login"
+  override val jsonPath = "login"
 
-  override def jsonRoute(reqJson: JValue): EndPoint = {
+  override def jsonRoute(protoId: String, reqJson: JValue): EndPoint = {
     logger.debug("get_json:" + reqJson)
-    val JString(protoId) = reqJson \ "protoId"
     protoId match {
       case "LOGIN_PROTO" =>
         val LoginOrRegReq(username, password) = (reqJson \ "load").extract[LoginOrRegReq]
