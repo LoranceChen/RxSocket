@@ -49,7 +49,7 @@ object JProtoClientMultiConnectionTest extends App {
 
     def get(name: String) = {
       jproto.flatMap { s =>
-        logger.info(s"s.sendWithRsp - $name")
+        logger.debug(s"s.sendWithRsp - $name")
         val rsp = s.sendWithRsp[OverviewReq, OverviewRsp](OverviewReq(name))
         rsp
       }
@@ -89,7 +89,7 @@ object JProtoClientMultiConnectionTest extends App {
       get(s"ha$i").foreach(id => {
         val count = glAtomCount.getAndIncrement()
         val localCount = localAtomCount.getAndIncrement()
-        logger.info(s"get response - $id, $count")
+        logger.debug(s"get response - $id, $count")
 //        if (localCount == toNumber) {
 //          println(s"send $toNumber request-response use time total: ${System.currentTimeMillis() - beginTime} ms")
 //          println(s"send $toNumber request-response use time QPS: ${toNumber * 1000 / (System.currentTimeMillis() - beginTime)}")
@@ -130,7 +130,7 @@ object JProtoClientMultiConnectionTest extends App {
   val glbAtomCount = AtomicInt(1)
 
   val beginTime = System.currentTimeMillis()
-  val clientCount = 10
+  val clientCount = 100
   val msgCount = 2000
 
   (1 to clientCount).toList.foreach(_ => {

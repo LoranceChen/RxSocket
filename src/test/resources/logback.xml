@@ -23,7 +23,7 @@
         </rollingPolicy>
     </appender>
 
-    <root level="TRACE">
+    <root level="INFO">
         <appender-ref ref="stdout" />
         <appender-ref ref="file" />
     </root>
