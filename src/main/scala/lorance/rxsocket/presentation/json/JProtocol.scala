@@ -24,7 +24,7 @@ import monix.reactive.subjects.PublishSubject
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 import scala.util.control.NonFatal
-import monix.execution.Scheduler.Implicits.global
+import lorance.rxsocket.execution.global
 
 /**
   * create a JProtocol to dispatch all json relate info bind with socket and it's read stream

@@ -2,7 +2,7 @@ package lorance.rxsocket.session
 
 import java.net.{InetSocketAddress, StandardSocketOptions}
 import java.nio.channels.{AsynchronousChannelGroup, AsynchronousServerSocketChannel, AsynchronousSocketChannel, CompletionHandler}
-import java.util.concurrent.Executors
+import java.util.concurrent.{Executors, ThreadFactory}
 
 import org.slf4j.LoggerFactory
 import lorance.rxsocket.dispatch.TaskManager
@@ -11,7 +11,7 @@ import monix.reactive.subjects.PublishSubject
 
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success}
-import monix.execution.Scheduler.Implicits.global
+import lorance.rxsocket.execution.global
 
 class ServerEntrance[Proto](host: String, port: Int, genParser: () => ProtoParser[Proto]) {
   private val logger = LoggerFactory.getLogger(getClass)
@@ -21,10 +21,7 @@ class ServerEntrance[Proto](host: String, port: Int, genParser: () => ProtoParse
   val socketAddress: InetSocketAddress = new InetSocketAddress(host, port)
 
   val server: AsynchronousServerSocketChannel = {
-    val cpus = Runtime.getRuntime.availableProcessors
-    val x = AsynchronousChannelGroup.withThreadPool(Executors.newWorkStealingPool(cpus * 2))
-
-    val server = AsynchronousServerSocketChannel.open(x)
+    val server = AsynchronousServerSocketChannel.open
     val prepared = server.bind(socketAddress)
     logger.info(s"server is bind at - $socketAddress")
     prepared
@@ -71,7 +68,6 @@ class ServerEntrance[Proto](host: String, port: Int, genParser: () => ProtoParse
 
           //todo connect setting back-pressure
           connectionSubs.onNext(connectedSocket)
-
           val nextConn = connection(server)
           connectForeverHelper(nextConn)
       }

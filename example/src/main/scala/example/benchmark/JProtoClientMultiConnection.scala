@@ -5,7 +5,7 @@ import java.util.concurrent.Executors
 
 import lorance.rxsocket.presentation.json.JProtocol
 import lorance.rxsocket.session.{ClientEntrance, CommActiveParser}
-import monix.execution.Scheduler.Implicits.global
+import lorance.rxsocket.execution.global
 import monix.execution.atomic.AtomicInt
 import org.slf4j.LoggerFactory
 

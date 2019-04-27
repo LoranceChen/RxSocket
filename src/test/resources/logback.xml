@@ -23,9 +23,9 @@
         </rollingPolicy>
     </appender>
 
-    <root level="TRACE">
+    <root level="WARN">
         <appender-ref ref="stdout" />
-        <appender-ref ref="file" />
+        <!--<appender-ref ref="file" />-->
     </root>
 
     <!--<logger name="minimo.route.LoginRouter" level="DEBUG"/>-->

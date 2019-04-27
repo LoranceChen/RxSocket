@@ -8,7 +8,7 @@ import monix.execution.Ack.Continue
 import monix.reactive.Observable
 
 import scala.concurrent.{Await, Future, Promise}
-import monix.execution.Scheduler.Implicits.global
+import lorance.rxsocket.execution.global
 
 /**
   * Json presentation Example

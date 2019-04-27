@@ -1,6 +1,6 @@
-package lorance.rxsocket.session
+package lorance.rxsocket
 
-import java.util.concurrent.{Executor, Executors}
+import monix.execution.Scheduler
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
@@ -8,30 +8,26 @@ import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
   *
   */
 package object execution {
-  class CurrentThreadExecutor extends Executor {
-    def execute( r: Runnable) = {
-      r.run()
-    }
-  }
 
   /**
-    * todo to test does it could ensure in current thread
-    * @return
+    * run action in current thread
     */
-  def currentThread = {
+  val currentThread: ExecutionContextExecutor = {
     val currentExe = new CurrentThreadExecutor
     ExecutionContext.fromExecutor(currentExe)
   }
 
-  def customExecutionContent(count: Int) = new ExecutionContext {
-    val threadPool = Executors.newWorkStealingPool(count)
-
-    def execute(runnable: Runnable) = {
-      threadPool.submit(runnable)
-    }
-
-    def reportFailure(t: Throwable) = {}
-  }
+  implicit val global: Scheduler = new RxGlobalThreadPool().global
+//
+//  def customExecutionContent(count: Int) = new ExecutionContext {
+//    val threadPool = Executors.newWorkStealingPool(count)
+//
+//    def execute(runnable: Runnable) = {
+//      threadPool.submit(runnable)
+//    }
+//
+//    def reportFailure(t: Throwable) = {}
+//  }
 
 //  private[session] lazy val sendExecutor: ExecutionContextExecutor = {
 //    val cpus = Runtime.getRuntime.availableProcessors

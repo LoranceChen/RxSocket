@@ -6,7 +6,7 @@ import monix.reactive.Observable
 import monix.reactive.observers.Subscriber
 
 import scala.concurrent.{Future, Promise}
-import monix.execution.Scheduler.Implicits.global
+import lorance.rxsocket.execution.global
 
 /**
   *

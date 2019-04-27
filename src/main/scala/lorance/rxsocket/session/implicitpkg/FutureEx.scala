@@ -1,7 +1,7 @@
 package lorance.rxsocket.session.implicitpkg
 
 import lorance.rxsocket.dispatch.{Task, TaskKey, TaskManager}
-import lorance.rxsocket.session.execution
+import lorance.rxsocket.execution
 
 import scala.concurrent.duration.Duration
 import scala.concurrent._

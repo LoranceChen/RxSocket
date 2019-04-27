@@ -29,3 +29,16 @@ From `v0.12.0`, RxSocket only support Scala `2.12.x` and `2.11.x`
     - allow handler massive request and give a slight performance affect
         - give a space to monitor network request status
 - better benchmark
+- concurrently handle request for every request.
+    - replace Monix: Monix for async operation but concurrent.
+    - need backpressure
+- support backpressure at thread-pool level.
+- support parser work with filter, such as support String 'aaaa##bbbb##' which '##' as protocol 
+split.
+
+- 添加backpressure
+- 添加断线重连
+    - 通过实现DisconnectSocket类，然后包装ConnectedSocket和DisconnectSocket统一接口
+- 自定义线程池
+    - 实现java SchedulerFuture，实现scala Future。注意：SchedulerFuture需要支持cancel操作，可重复的定时任务
+        需要支持取消操作——已经不是不可变的future了

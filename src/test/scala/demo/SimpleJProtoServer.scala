@@ -7,7 +7,7 @@ import lorance.rxsocket.session.{CommActiveParser, CommPassiveParser, ServerEntr
 import monix.execution.Ack.Continue
 import org.json4s.JsonAST.JString
 import org.json4s.native.JsonMethods._
-import monix.execution.Scheduler.Implicits.global
+import lorance.rxsocket.execution.global
 
 /**
   * Json presentation Example

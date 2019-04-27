@@ -3,12 +3,14 @@ package lorance.rxsocket.session
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.{AsynchronousSocketChannel, ClosedChannelException, CompletionHandler, ShutdownChannelGroupException}
+import java.util.concurrent.atomic.LongAdder
 import java.util.concurrent.{ConcurrentLinkedQueue, Semaphore}
 
 import org.slf4j.LoggerFactory
 import lorance.rxsocket.dispatch.TaskManager
 import lorance.rxsocket.session.exception.{ReadResultNegativeException, SocketClosedException}
 import lorance.rxsocket._
+import lorance.rxsocket.session.connect.BackPressureStatistic
 import lorance.rxsocket.session.implicitpkg._
 import monix.execution.Ack.{Continue, Stop}
 import monix.reactive.{Observable, OverflowStrategy}
@@ -16,7 +18,10 @@ import monix.reactive.subjects.PublishSubject
 
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success, Try}
-import scala.concurrent.ExecutionContext.Implicits.global
+import lorance.rxsocket.execution.global
+import monix.eval.Task
+import monix.execution.atomic.AtomicBoolean
+
 import scala.util.control.NonFatal
 import scala.concurrent.duration._
 
@@ -27,7 +32,9 @@ class ConnectedSocket[Proto](socketChannel: AsynchronousSocketChannel,
 //                      heartBeatsManager: TaskManager,
                       val addressPair: AddressPair,
                       isServer: Boolean,
-                      protoParser: ProtoParser[Proto]) {
+                      protoParser: ProtoParser[Proto],
+
+                            ) {
   private val logger = LoggerFactory.getLogger(getClass)
 
 //  private val protoParser = new ReaderDispatch()
@@ -45,7 +52,7 @@ class ConnectedSocket[Proto](socketChannel: AsynchronousSocketChannel,
   @volatile private var closeReason: String = "normal close"
 
   private val formerSendLock = new Object
-  private var formerSendFur = Future.successful(())
+  @volatile private var formerSendFur = Future.successful(())
 //  @volatile private var formerSendTimeoutPromise = Promise[Unit]()
 
   //a event register when socket disconnect
@@ -94,7 +101,9 @@ class ConnectedSocket[Proto](socketChannel: AsynchronousSocketChannel,
     beginReading()
 
     readSubscribes
-      .asyncBoundary(OverflowStrategy.BackPressure(100))
+      // do not need the backpressure method???
+      .asyncBoundary(OverflowStrategy.BackPressure(10)) //10个并发吗？或者只是10个顺序的异步消费？期望是并发操作
+//      .mapParallelUnordered(Runtime.getRuntime.availableProcessors()){x => Task(x)}
       .doOnComplete(() => logger.debug("reading completed"))
       .doOnError(e => logger.warn("reading completed with error - ", e))
   }
@@ -115,7 +124,7 @@ class ConnectedSocket[Proto](socketChannel: AsynchronousSocketChannel,
           }
         case Success(c) =>
           val src = c.byteBuffer
-          logger.trace(s"read position: ${src.position} bytes")
+//          logger.trace(s"read position: ${src.position} bytes")
           val protos = protoParser.receive(src)
           logger.trace(s"get protocols - $protos")
 
@@ -126,13 +135,39 @@ class ConnectedSocket[Proto](socketChannel: AsynchronousSocketChannel,
               case Some(proto) => //has some proto not send complete
                 logger.trace(s"completed proto - $proto")
 
-                readSubscribes.onNext(proto).map {
-                  case Continue =>
-                    publishProtoWithGoodHabit(leftProtos.tail)
+                val sum = BackPressureStatistic.sum()
+                logger.warn("BackPressureStatistic.sum: " + sum)
+
+
+                //todo 优化：合并单个的检查操作匹配？？？
+                if(sum > Configration.BACKPRESSURE * 1.5) {
+                  println("open rate limit - " + sum)
+                  val notTrigger = AtomicBoolean(true)
+                  BackPressureStatistic.rateLimiter.subscribe{limited: Boolean => {
+                    if (!limited && notTrigger.getAndSet(false)) {
+                      println("close rate limit - " + sum)
+                      publishProtoWithGoodHabit(leftProtos)
+                      Stop
+                    }
                     Continue
-                  case Stop =>
-                    //todo: should just Stop? What effect will be occurred.
-                    Stop
+                  }}
+                } else {
+                  readSubscribes.onNext({
+                    BackPressureStatistic.increment()
+                    proto
+                  }).map {
+                    case Continue =>
+                      BackPressureStatistic.decrement()
+                      publishProtoWithGoodHabit(leftProtos.tail)
+                      Continue
+                    case Stop =>
+//                      BackPressureStatistic.decrement()
+                      Stop
+                  }
+                  //do next message concurrently
+//                  publishProtoWithGoodHabit(leftProtos.tail)
+
+
                 }
             }
 
@@ -140,19 +175,8 @@ class ConnectedSocket[Proto](socketChannel: AsynchronousSocketChannel,
           }
 
           publishProtoWithGoodHabit(protos)
-//            protos.foreach{proto =>
-//              //filter heart beat proto
-//              logger.trace(s"completed proto - $proto")
-//
-//              if(proto.uuid == 0.toByte) {
-//                logger.trace(s"dispatched heart beat - $proto")
-//                heart = true
-//              } else {
-//                readSubscribes.onNext(proto)
-//              }
-//            }
-        }//(session.execution.readExecutor)
-//          beginReadingClosure()
+
+        }
     }
     beginReadingClosure()
   }
@@ -203,7 +227,7 @@ class ConnectedSocket[Proto](socketChannel: AsynchronousSocketChannel,
           }
 
           p.future
-        }) //(session.execution.sendExecutor)
+        })
 
 //        curFur.foreach(_ => {
 //          //send heartbeat with timeout

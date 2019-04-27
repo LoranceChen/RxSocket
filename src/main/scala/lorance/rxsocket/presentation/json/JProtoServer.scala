@@ -8,7 +8,7 @@ import org.json4s.JsonAST.JValue
 import org.json4s.JsonDSL._
 
 import scala.util.{Failure, Success}
-import monix.execution.Scheduler.Implicits.global
+import lorance.rxsocket.execution.global
 
 import scala.concurrent.{Future, Promise}
 

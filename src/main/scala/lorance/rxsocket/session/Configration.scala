@@ -30,6 +30,13 @@ object Configration {
 
   var CONNECT_TIME_LIMIT = 10 // second
 
-//  var SEND_HEART_BEAT_BREAKTIME = 30 //second
+  val WORKTHREAD_COUNT = 16//Runtime.getRuntime.availableProcessors / 1
+
+  // todo need used by CPU etc. it's better limit CPU under 80%
+  //      could it be adjust at dynamic runtime?
+  // monitor： 频繁的触发被压就说明需要扩展了。
+  val BACKPRESSURE = WORKTHREAD_COUNT * 1000 // handle message count
+
+  //  var SEND_HEART_BEAT_BREAKTIME = 30 //second
 //  var CHECK_HEART_BEAT_BREAKTIME = 60 // Should large then SEND_HEART_BEAT_BREAKTIME
 }

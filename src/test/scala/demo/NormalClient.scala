@@ -5,7 +5,7 @@ import java.nio.ByteBuffer
 import lorance.rxsocket.session._
 import monix.execution.Ack.Continue
 import monix.reactive.Observable
-import monix.execution.Scheduler.Implicits.global
+import lorance.rxsocket.execution.global
 
 /**
   * simplest Example

@@ -4,8 +4,13 @@ import lorance.rxsocket.presentation.json.JProtocol
 import lorance.rxsocket.session.{CommActiveParser, CommPassiveParser, ServerEntrance}
 import monix.execution.Ack.Continue
 import org.slf4j.LoggerFactory
-import monix.execution.Scheduler.Implicits.global
+import lorance.rxsocket.execution.global
 import java.lang.management.ManagementFactory
+import java.util.concurrent.TimeUnit
+
+import monix.execution.{Ack, Scheduler}
+
+import scala.concurrent.Promise
 
 object JProtoServer extends App {
   val logger = LoggerFactory.getLogger(getClass)
@@ -35,7 +40,20 @@ object JProtoServer extends App {
     jproto.jRead.subscribe { j =>
       //echo
 //      logger.info(s"sent data - $j")
-      jproto.sendRaw(j).flatMap(_ => Continue)
+
+      jproto.sendRaw(j).flatMap(_ => {
+        Continue
+      })
+
+//      val p = Promise[Ack]
+//      Scheduler.global.scheduleOnce(1000, TimeUnit.MILLISECONDS, () => {
+//        jproto.sendRaw(j).foreach(_ => {
+//          p.completeWith(Ack.Continue)
+//        })
+//      })
+//      p.future
+
+//      Continue
     }
 
     Continue

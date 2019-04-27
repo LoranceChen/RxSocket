@@ -5,7 +5,7 @@ import lorance.rxsocket.session.{ClientEntrance, CommActiveParser, CommPassivePa
 import monix.execution.Ack.Continue
 import monix.reactive.Observable
 import org.json4s.JsonAST.JValue
-import monix.execution.Scheduler.Implicits.global
+import lorance.rxsocket.execution.global
 
 /**
   *

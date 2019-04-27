@@ -4,8 +4,8 @@ name := "rxsocket"
 
 organization := "com.scalachan"
 
-scalaVersion := "2.12.6"
-crossScalaVersions := Seq("2.12.6", "2.11.12")
+scalaVersion := "2.12.8"
+crossScalaVersions := Seq("2.12.8", "2.11.12")
 
 scalacOptions ++= Seq(
   "-deprecation",
@@ -36,6 +36,7 @@ libraryDependencies ++= Seq(
   "io.monix" %% "monix" % "3.0.0-RC1",
   "org.json4s" %% "json4s-native" % "3.6.0-M3",
   "org.slf4j" % "slf4j-api" % "1.7.25",
+  "com.typesafe.akka" %% "akka-actor" % "2.5.20",
   "ch.qos.logback" % "logback-classic" % "1.2.3" % Test,
   "junit" % "junit" % "4.12" % Test,
 
@@ -62,8 +63,6 @@ lazy val example = (project in file("example"))
     )
   )
   .dependsOn(root)
-
-lazy val task = project in file("task")
 
 lazy val root = (project in file(".")).
   settings(commonPublishSettings).

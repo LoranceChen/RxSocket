@@ -5,9 +5,10 @@ import java.lang.management.ManagementFactory
 import lorance.rxsocket.presentation.json.JProtocol
 import lorance.rxsocket.session.{ClientEntrance, CommActiveParser, CommPassiveParser}
 import org.slf4j.LoggerFactory
-import monix.execution.Scheduler.Implicits.global
+import lorance.rxsocket.execution.global
 import monix.execution.atomic.AtomicInt
 
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 object JProtoClient extends App {
@@ -41,7 +42,8 @@ object JProtoClient extends App {
 
   val sr = connect.map(s => (s, s.startReading))
 
-  val jproto = sr.map { x => logger.info("hi strat reading"); new JProtocol(x._1, x._2) }
+  val jproto: Future[JProtocol] = sr.map { x => logger.info("hi strat reading"); new JProtocol(x._1, x._2) }
+
 
   def get(id: Int) = {
     jproto.flatMap { s =>

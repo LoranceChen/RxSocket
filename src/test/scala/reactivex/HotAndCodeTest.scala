@@ -1,19 +1,20 @@
 package reactivex
 
-import java.util.concurrent.Executors
+import java.util.concurrent.{Executors, TimeUnit}
 
+import monix.eval.Task
 import monix.execution.Ack.{Continue, Stop}
-import monix.execution.Scheduler
-import monix.reactive.Observable
+import monix.execution.{Ack, Scheduler}
+import monix.reactive.{Observable, OverflowStrategy}
 import monix.reactive.observers.Subscriber
 import monix.reactive.subjects.PublishSubject
 import org.junit.Test
 import org.slf4j.LoggerFactory
 
 import concurrent.duration._
-import monix.execution.Scheduler.Implicits.global
+import lorance.rxsocket.execution.global
 
-import scala.concurrent.Future
+import scala.concurrent.{Future, Promise}
 /**
   *
   */
@@ -181,6 +182,62 @@ class HotAndCodeTest {
     maped.doOnNext(x => logger.info("maped msg - " + x))
     maped.doOnError(x => logger.info("maped error - " + x))
     maped.doOnComplete(() => logger.info("maped complete - "))
+
+    Thread.currentThread().join()
+  }
+
+  @Test
+  def subscribe(): Unit = {
+    val obv = PublishSubject[Int]()
+    var a = 1
+    Scheduler.global.scheduleAtFixedRate(
+      1000 * 3L,
+      1000 * 3L,
+      TimeUnit.MILLISECONDS,
+      () => {
+        obv.onNext(a)
+        a = a + 1
+      }
+    )
+
+    Scheduler.global.scheduleOnce(
+      1000 * 10L,
+      TimeUnit.MILLISECONDS,
+      () => {
+        obv.subscribe{a =>
+          println("aaa - " + a)
+          Stop
+        }
+      }
+    )
+
+    Thread.currentThread().join()
+  }
+
+  //test asyncBoundary
+  @Test
+  def testAsyncBoundary(): Unit = {
+    val obv = PublishSubject[Int]()
+    Scheduler.global.scheduleOnce(5000L, TimeUnit.MILLISECONDS,
+      () => {
+        var i = 0
+        while(i < 1000) {
+          obv.onNext(i)
+          i=i+1
+        }
+      })
+
+    val backed = obv.whileBusyBuffer(OverflowStrategy.DropNew(10))
+
+    //1s后完成，查看是否有10个并发
+    backed.subscribe(x => {
+      println("do work - " + x)
+      val p = Promise[Ack]
+      Scheduler.global.scheduleOnce(1000, TimeUnit.MILLISECONDS, () => {
+        p.completeWith(Ack.Continue)
+      })
+      p.future
+    })
 
     Thread.currentThread().join()
   }

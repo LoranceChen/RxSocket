@@ -4,7 +4,7 @@ import lorance.rxsocket.presentation.json.JProtocol
 import lorance.rxsocket.session.{CommActiveParser, CommPassiveParser, ServerEntrance}
 import monix.execution.Ack.Continue
 import org.slf4j.LoggerFactory
-import monix.execution.Scheduler.Implicits.global
+import lorance.rxsocket.execution.global
 import java.lang.management.ManagementFactory
 
 object EchoJProtoServer extends App {

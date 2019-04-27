@@ -2,7 +2,7 @@ package tmptest
 
 import monix.execution.Ack.Continue
 import monix.reactive.subjects.PublishSubject
-import monix.execution.Scheduler.Implicits.global
+import lorance.rxsocket.execution.global
 
 object GcTest extends App {
   demo.tool.Tool.showPid
